@@ -24,6 +24,10 @@ private:
     QPushButton * manFirstButton;
     QPushButton * beginConsecutiveEatingButton; //开始连续跳吃
     QPushButton * repealConsecutiveEatingButton;   //撤销连续跳吃
+
+    QPushButton* undoButton; //开始悔棋
+    QPushButton* redoButton; //撤销悔棋
+
     QLabel * pathLabel;
 
     QGridLayout * mainLayout;
