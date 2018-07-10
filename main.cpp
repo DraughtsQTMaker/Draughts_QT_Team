@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]){
 
-    // remote dev
+    // remote develop
 
     QApplication a(argc, argv);
 
