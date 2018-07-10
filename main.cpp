@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]){
 
-    // remote develop branch
+    // remote master branch
 
     QApplication a(argc, argv);
 
