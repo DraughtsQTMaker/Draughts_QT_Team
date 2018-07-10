@@ -8,6 +8,9 @@
 #include "mainwindow.h"
 
 int main(int argc, char *argv[]){
+
+    // test team manage
+
     QApplication a(argc, argv);
 
     MainWindow mainWin;
