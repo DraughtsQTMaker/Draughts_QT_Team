@@ -10,7 +10,7 @@
 int main(int argc, char *argv[]){
 
     // remote develop branch
-    // new
+    // need to merge
 
     QApplication a(argc, argv);
 
