@@ -39,14 +39,15 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->repealConsecutiveEatingButton->resize(40,20);
     this->repealConsecutiveEatingButton->setText("Repeal Consecutive Eating");
 
-    this->redoButton = new QPushButton(this);
-    this->redoButton->resize(40, 20);
-    this->redoButton->setText("Redo");
-
     this->undoButton = new QPushButton(this);
     this->undoButton->resize(40, 20);
     this->undoButton->setText("Undo");
+    this->undoButton->setDisabled(true);
 
+    this->redoButton = new QPushButton(this);
+    this->redoButton->resize(40, 20);
+    this->redoButton->setText("Redo");
+    this->redoButton->setDisabled(true);
 
     mainLayout->addWidget(this->robotFirstButton, this->chessboardType,0,1,this->chessboardType/2);
     mainLayout->addWidget(this->manFirstButton, this->chessboardType,this->chessboardType/2,1,this->chessboardType/2);
@@ -54,14 +55,17 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     mainLayout->addWidget(this->beginConsecutiveEatingButton,this->chessboardType+1,0,1,this->chessboardType/2);
     mainLayout->addWidget(this->repealConsecutiveEatingButton,this->chessboardType+1,this->chessboardType/2,1,this->chessboardType/2);
 
-    mainLayout->addWidget(this->redoButton, this->chessboardType+2, 0, 1, this->chessboardType/2);
-    mainLayout->addWidget(this->undoButton, this->chessboardType+2, this->chessboardType/2, 1, this->chessboardType/2);
+    mainLayout->addWidget(this->undoButton, this->chessboardType+2, 0, 1, this->chessboardType/2);
+    mainLayout->addWidget(this->redoButton, this->chessboardType+2, this->chessboardType/2, 1, this->chessboardType/2);
 
     connect(this->robotFirstButton, SIGNAL(clicked()), this, SLOT(robotAction()));
     connect(this->manFirstButton, SIGNAL(clicked()), this,SLOT(manAction()));
 
     connect(this->beginConsecutiveEatingButton,SIGNAL(clicked()), this, SLOT(beginConsecutiveEating()));
     connect(this->repealConsecutiveEatingButton, SIGNAL(clicked()), this, SLOT(repealConsecutiveEating()));
+
+    connect(this->undoButton, SIGNAL(clicked()), this, SLOT(undo()));
+    connect(this->redoButton, SIGNAL(clicked()), this, SLOT(redo()));
 
     this->pathLabel = new QLabel();
     this->pathLabel->setStyleSheet("background-color:rgb(255,248,220)");
@@ -1022,7 +1026,21 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 qDebug()<< "人起子位置：("<<clickedPositionList[0].first <<",\t" << clickedPositionList[0].second <<")";
                 qDebug()<< "人落子位置：("<<clickedPositionList[1].first << ",\t" << clickedPositionList[1].second <<")";
 
+                PiecePos human_begin = {clickedPositionList[0].first, clickedPositionList[0].second};
+                PiecePos human_end = {clickedPositionList[1].first, clickedPositionList[1].second};
+                this->historyStack_human.push_back(QPair<PiecePos,PiecePos>(human_begin, human_end));
 
+                if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                        && !this->undoButton->isEnabled())
+                    this->undoButton->setEnabled(true);
+
+                if (!this->redoStack_human.empty())
+                    this->redoStack_human.clear();
+                if (!this->redoStack_robot.empty())
+                    this->redoStack_robot.clear();
+                if ((this->redoStack_human.empty() || this->redoStack_robot.empty())
+                        && this->redoButton->isEnabled())
+                    this->redoButton->setDisabled(true);
 
 
                 //吃子----------------------开始吃子--------------------------//
@@ -1101,13 +1119,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
 
 
                 //移动完棋子之后，就可以把点击位置记录器清空了
-                 clickedPositionList.clear();
-
-
-
-
-
-
+                clickedPositionList.clear();
 
                 //Add Function:由于第一次点击棋子后，有一部分空棋位是Disabled，所以这里要把所有空棋位设置为enabled
                 //这可以通过ChessBoard::中的setAllEmptyPositionBeEnabled()
@@ -1234,6 +1246,14 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
             qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
             qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
 
+            PiecePos robot_begin = {oldPositionList[i].first, oldPositionList[i].second};
+            PiecePos robot_end = {newPositionList[i].first, newPositionList[i].second};
+            this->historyStack_robot.push_back(QPair<PiecePos,PiecePos>(robot_begin, robot_end));
+
+            if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                    && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
+                this->undoButton->setEnabled(true);
+
             QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
             int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
             QString legalTargetPositionString = QString::number(legalTargetPosition);
@@ -1282,6 +1302,14 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
             qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
             qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
 
+            PiecePos robot_begin = {oldPositionList[i].first, oldPositionList[i].second};
+            PiecePos robot_end = {newPositionList[i].first, newPositionList[i].second};
+            this->historyStack_robot.push_back(QPair<PiecePos,PiecePos>(robot_begin, robot_end));
+
+            if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                    && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
+                this->undoButton->setEnabled(true);
+
             QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
             int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
             QString legalTargetPositionString = QString::number(legalTargetPosition);
@@ -1308,6 +1336,16 @@ void Chessboard::robotAction(){
 
     //生成一个robot对象（此时，robot对象为黑棋）
     this->robot = new Checker_AlphaBetaSearch(this->layerNumber);
+
+    //clear stack
+    if (!this->historyStack_human.empty())
+        this->historyStack_human.clear();
+    if (!this->historyStack_robot.empty())
+        this->historyStack_robot.clear();
+    if (!this->redoStack_human.empty())
+        this->redoStack_human.clear();
+    if (!this->redoStack_robot.empty())
+        this->redoStack_robot.clear();
 
     //根据chessLabelList生成ChessStatus对象
     this->getCurrentChessStatusFromChessLabelList();
@@ -1342,6 +1380,16 @@ void Chessboard::manAction(){
     //当人先下棋时,此时机器方应该是红子，所以blackTurn为False。人先下，所以人为黑子，所以可以点击的是黑子，红子不可点击
     blackTurn = false;
     redGuiPieceAvailable = false;
+
+    //clear stack
+    if (!this->historyStack_human.empty())
+        this->historyStack_human.clear();
+    if (!this->historyStack_robot.empty())
+        this->historyStack_robot.clear();
+    if (!this->redoStack_human.empty())
+        this->redoStack_human.clear();
+    if (!this->redoStack_robot.empty())
+        this->redoStack_robot.clear();
 
     //初始化一个棋盘上需要的Chess Label List
 	Checker_CheckerState::setEvaluateBlack(false);
@@ -1379,7 +1427,116 @@ void Chessboard::repealConsecutiveEating(){
     }
 }
 
+//SLOTS
+void Chessboard::undo()
+{
+    if (!this->historyStack_human.empty() || !this->historyStack_robot.empty()
+            || !this->redoStack_human.empty() || !this->redoStack_robot.empty()) {
 
+        qDebug() << "undoing ------------";
+
+        if (!this->historyStack_human.empty()) {
+
+            PiecePos human_begin = historyStack_human.back().first;
+            PiecePos human_end = historyStack_human.back().second;
+            int p = human_end.x*(this->chessboardType) + human_end.y;
+            int theFirstType = this->chessLabelList[p]->getChessType();
+            //修改行棋目标位置的棋位为空；设置行棋原始位置的棋子类型
+            //
+            this->chessLabelList[human_end.x*(this->chessboardType) + human_end.y]->setChessType(0);
+            //
+            this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->setChessType(theFirstType);
+
+            this->redoStack_human.push_back(this->historyStack_human.back());
+            this->historyStack_human.pop_back();
+        }
+        if (!this->historyStack_robot.empty()) {
+
+            PiecePos robot_begin = historyStack_robot.back().first;
+            PiecePos robot_end = historyStack_robot.back().second;
+            int p = robot_end.x*(this->chessboardType) + robot_end.y;
+            int theFirstType = this->chessLabelList[p]->getChessType();
+            //修改行棋目标位置的棋位为空；设置行棋原始位置的棋子类型
+            //
+            this->chessLabelList[robot_end.x*(this->chessboardType) + robot_end.y]->setChessType(0);
+            //
+            this->chessLabelList[robot_begin.x*(this->chessboardType) + robot_begin.y]->setChessType(theFirstType);
+
+            this->redoStack_robot.push_back(this->historyStack_robot.back());
+            this->historyStack_robot.pop_back();
+        }
+
+        if (this->historyStack_human.empty() || this->historyStack_human.empty()) {
+            this->undoButton->setDisabled(true);
+        }
+
+        if ((!this->redoStack_human.empty() || !this->redoStack_robot.empty())
+                && !this->redoButton->isEnabled()) {
+
+            this->redoButton->setEnabled(true);
+        }
+
+        //刷新棋盘
+        this->refreshChessBoard();
+
+    }
+
+}
+
+//SLOTS
+void Chessboard::redo()
+{
+    if (!this->historyStack_human.empty() || !this->historyStack_robot.empty()
+            || !this->redoStack_human.empty() || !this->redoStack_robot.empty()) {
+        qDebug() << "redoing -----------";
+
+        if (!this->redoStack_human.empty()) {
+
+            PiecePos human_begin = redoStack_human.back().first;
+            PiecePos human_end = redoStack_human.back().second;
+            int p = human_begin.x*(this->chessboardType) + human_begin.y;
+            int theFirstType = this->chessLabelList[p]->getChessType();
+            //修改行棋原始位置的棋位为空；设置行棋目标位置的棋子类型
+            //
+            this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->setChessType(0);
+            //
+            this->chessLabelList[human_end.x*(this->chessboardType) + human_end.y]->setChessType(theFirstType);
+
+            this->historyStack_human.push_back(this->redoStack_human.back());
+            this->redoStack_human.pop_back();
+        }
+        if (!this->redoStack_robot.empty()) {
+
+            PiecePos robot_begin = redoStack_robot.back().first;
+            PiecePos robot_end = redoStack_robot.back().second;
+            int p = robot_begin.x*(this->chessboardType) + robot_begin.y;
+            int theFirstType = this->chessLabelList[p]->getChessType();
+            //修改行棋原始位置的棋位为空；设置行棋目标位置的棋子类型
+            //
+            this->chessLabelList[robot_begin.x*(this->chessboardType) + robot_begin.y]->setChessType(0);
+            //
+            this->chessLabelList[robot_end.x*(this->chessboardType) + robot_end.y]->setChessType(theFirstType);
+
+            this->historyStack_robot.push_back(this->redoStack_robot.back());
+            this->redoStack_robot.pop_back();
+        }
+
+        if (this->redoStack_human.empty() || this->redoStack_human.empty()) {
+            this->redoButton->setDisabled(true);
+        }
+
+        if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                && !this->undoButton->isEnabled()) {
+
+            this->undoButton->setEnabled(true);
+        }
+
+        //刷新棋盘
+        this->refreshChessBoard();
+
+    }
+
+}
 
 //判断棋盘局面输赢
 void Chessboard::judge(){

@@ -11,6 +11,16 @@
 #include "BackEnd/Checker_AlphaBetaSearch.h"
 #include "BackEnd/Checker_CheckerState.h"
 
+struct PiecePos
+{
+    int x;
+    int y;
+
+    PiecePos(int x, int y) :
+        x(x), y(y)
+    {}
+
+};
 
 class Chessboard : public QLabel
 {
@@ -27,6 +37,11 @@ private:
 
     QPushButton* undoButton; //开始悔棋
     QPushButton* redoButton; //撤销悔棋
+
+    QList<QPair<PiecePos, PiecePos>> historyStack_human; //栈结构，记录行棋始末位置，用于悔棋(human)
+    QList<QPair<PiecePos, PiecePos>> redoStack_human; //栈结构，记录悔棋始末位置，用于撤销悔棋(human)
+    QList<QPair<PiecePos, PiecePos>> historyStack_robot; //栈结构，记录行棋始末位置，用于悔棋(robot)
+    QList<QPair<PiecePos, PiecePos>> redoStack_robot; //栈结构，记录悔棋始末位置，用于撤销悔棋(robot)
 
     QLabel * pathLabel;
 
@@ -98,6 +113,8 @@ public slots:
     void manAction();
     void beginConsecutiveEating();
     void repealConsecutiveEating();
+    void undo();
+    void redo();
 
 };
 
