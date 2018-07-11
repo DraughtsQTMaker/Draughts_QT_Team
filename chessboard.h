@@ -15,11 +15,21 @@ struct PiecePos
 {
     int x;
     int y;
+    int chessType;
 
-    PiecePos(int x, int y) :
-        x(x), y(y)
+    PiecePos(int x, int y, int type=0) :
+        x(x), y(y), chessType(type)
     {}
 
+};
+
+struct StackElement
+{
+    QPair<PiecePos, PiecePos> begin_end_pos;
+    QList<PiecePos> eat_pos_lst;
+    StackElement(QPair<PiecePos,PiecePos> b_e_p, QList<PiecePos> e_p_lst) :
+        begin_end_pos(b_e_p), eat_pos_lst(e_p_lst)
+    {}
 };
 
 class Chessboard : public QLabel
@@ -38,10 +48,15 @@ private:
     QPushButton* undoButton; //开始悔棋
     QPushButton* redoButton; //撤销悔棋
 
-    QList<QPair<PiecePos, PiecePos>> historyStack_human; //栈结构，记录行棋始末位置，用于悔棋(human)
-    QList<QPair<PiecePos, PiecePos>> redoStack_human; //栈结构，记录悔棋始末位置，用于撤销悔棋(human)
-    QList<QPair<PiecePos, PiecePos>> historyStack_robot; //栈结构，记录行棋始末位置，用于悔棋(robot)
-    QList<QPair<PiecePos, PiecePos>> redoStack_robot; //栈结构，记录悔棋始末位置，用于撤销悔棋(robot)
+//    QList<QPair<PiecePos, PiecePos>> historyStack_human; //栈结构，记录行棋始末位置，用于悔棋(human)
+//    QList<QPair<PiecePos, PiecePos>> redoStack_human; //栈结构，记录悔棋始末位置，用于撤销悔棋(human)
+//    QList<QPair<PiecePos, PiecePos>> historyStack_robot; //栈结构，记录行棋始末位置，用于悔棋(robot)
+//    QList<QPair<PiecePos, PiecePos>> redoStack_robot; //栈结构，记录悔棋始末位置，用于撤销悔棋(robot)
+
+    QList<StackElement> historyStack_human;
+    QList<StackElement> redoStack_human;
+    QList<StackElement> historyStack_robot;
+    QList<StackElement> redoStack_robot;
 
     QLabel * pathLabel;
 
@@ -80,8 +95,6 @@ private:
 
     //当点击一个棋子后，寻找其所有可以移动的合法位置
     void searchAvaliablePositionToMove(int, QPair<int,int>);
-
-
 
     //显示当前可以落子的位置
     void showPossiblePositionCanMoveTo();
