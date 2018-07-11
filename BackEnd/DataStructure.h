@@ -72,8 +72,11 @@ struct SingleChessPiece
 struct ChessStatus
 {
     int nCountRed;
-    SingleChessPiece redPieceList[20];
     int nCountBlack;
+
+    // when 8*8 type's chessboard, 12 elements are used (every side of players has 12 pieces)
+    // when 10*10 type;s chessboard, 20 elements are used (every side of players has 20 pieces)
+    SingleChessPiece redPieceList[20];
     SingleChessPiece blackPieceList[20];
     
 };
