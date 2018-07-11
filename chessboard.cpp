@@ -875,7 +875,7 @@ void Chessboard::getCurrentChessStatusFromChessLabelList(){
 
 
     //把CheckerState中的List中空置的单元填充上
-    if (this->chessboardType == 8) {
+    if (this->chessboardType == 8) { //8*8棋盘
         if(walkToBottomCounter <= 11){
             for(int i = walkToBottomCounter; i<12;i++){
 
@@ -904,7 +904,7 @@ void Chessboard::getCurrentChessStatusFromChessLabelList(){
         }
 
     }
-    else {
+    else { //10*10棋盘
         if(walkToBottomCounter <= 19){
             for(int i = walkToBottomCounter; i<20;i++){
 
