@@ -11,8 +11,6 @@ int main(int argc, char *argv[]){
 
     // remote develop branch
 
-    // locals
-
     QApplication a(argc, argv);
 
     MainWindow mainWin;
