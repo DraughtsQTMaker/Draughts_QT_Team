@@ -48,7 +48,7 @@ private:
     // layer number of version 64
     const int mode64_layNum = 8;
     // layer number of version 100
-    const int mode100_layNum = 8;
+    const int mode100_layNum = 3;
 
 public slots:
     virtual void accept();

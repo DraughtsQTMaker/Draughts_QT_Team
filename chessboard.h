@@ -32,6 +32,17 @@ struct StackElement
     {}
 };
 
+struct ChessInfo
+{
+    QPair<int,int> pos;
+    int chessType;
+    bool isExisted;
+
+    ChessInfo(QPair<int,int> _pos, int type, bool _isExisted) :
+        pos(_pos), chessType(type), isExisted(_isExisted)
+    {}
+};
+
 class Chessboard : public QLabel
 {
     Q_OBJECT
