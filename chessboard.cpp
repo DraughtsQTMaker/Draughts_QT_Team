@@ -1300,7 +1300,7 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
     //用于记录所吃黑子的位置信息
     for (int i=0; i<oldBlackInfos.size(); ++i) {
         if (oldBlackInfos[i].isExisted != newBlackInfos[i].isExisted) {
-            qDebug() << "enter if block";
+//            qDebug() << "enter if block";
             PiecePos ppos = PiecePos(oldBlackInfos[i].pos.first,
                                      oldBlackInfos[i].pos.second,
                                      oldBlackInfos[i].chessType);
@@ -1347,6 +1347,8 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
     std::vector<std::pair<int, int> > oldPositionList;
     std::vector<std::pair<int, int> > newPositionList;
 
+    std::vector<ChessInfo> oldRedInfos;
+    std::vector<ChessInfo> newRedInfos;
 
     for (SingleChessPiece tempBlackPiece : oldChessStatus.blackPieceList){
         if (tempBlackPiece.isExisted()){
@@ -1365,8 +1367,44 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
         }
     }
 
+    for (SingleChessPiece tempRedPiece : oldChessStatus.redPieceList) {
+        int row = tempRedPiece.getRow();
+        int col = tempRedPiece.getCol();
+        QPair<int,int> _pos;
+        _pos.first = row;
+        _pos.second = col;
+        int chessType = tempRedPiece.isKing() ? -2 : -1;
+        bool isExisted = tempRedPiece.isExisted();
+        ChessInfo tempInfo = ChessInfo(_pos, chessType, isExisted);
+        oldRedInfos.push_back(tempInfo);
+    }
+
+    for (SingleChessPiece tempRedPiece : newChessStatus.redPieceList) {
+        int row = tempRedPiece.getRow();
+        int col = tempRedPiece.getCol();
+        QPair<int,int> _pos;
+        _pos.first = row;
+        _pos.second = col;
+        int chessType = tempRedPiece.isKing() ? -2 : -1;
+        bool isExisted = tempRedPiece.isExisted();
+        ChessInfo tempInfo = ChessInfo(_pos, chessType, isExisted);
+        newRedInfos.push_back(tempInfo);
+    }
 
     //寻找两个list中的不同元素（结合棋盘特性，和ChessStatus的特性，只需要O（n)
+    QList<PiecePos> eat_lst;
+
+    //用于记录所吃红子的位置信息
+    for (int i=0; i<oldRedInfos.size(); ++i) {
+        if (oldRedInfos[i].isExisted != newRedInfos[i].isExisted) {
+            PiecePos ppos = PiecePos(oldRedInfos[i].pos.first,
+                                     oldRedInfos[i].pos.second,
+                                     oldRedInfos[i].chessType);
+            eat_lst.push_back(ppos);
+        }
+    }
+
+
     for (int i = 0; i < oldPositionList.size();i++){
         if (oldPositionList[i] != newPositionList[i]){
             QString beginPosition = "(" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + ")";
@@ -1376,9 +1414,9 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
             qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
             qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
 
-            PiecePos robot_begin = {oldPositionList[i].first, oldPositionList[i].second};
+            int type = this->chessLabelList[oldPositionList[i].first*this->chessboardType + oldPositionList[i].second]->getChessType();
+            PiecePos robot_begin = {oldPositionList[i].first, oldPositionList[i].second, type};
             PiecePos robot_end = {newPositionList[i].first, newPositionList[i].second};
-            QList<PiecePos> eat_lst;
             StackElement elem = StackElement(QPair<PiecePos,PiecePos>(robot_begin,robot_end), eat_lst);
 //            this->historyStack_robot.push_back(QPair<PiecePos,PiecePos>(robot_begin, robot_end));
             this->historyStack_robot.push_back(elem);
@@ -1592,6 +1630,7 @@ void Chessboard::redo()
             || !this->redoStack_human.empty() || !this->redoStack_robot.empty()) {
         qDebug() << "redoing -----------";
 
+
         if (!this->redoStack_human.empty()) {
 
 //            PiecePos human_begin = redoStack_human.back().first;
@@ -1630,12 +1669,12 @@ void Chessboard::redo()
             this->chessLabelList[robot_begin.x*(this->chessboardType) + robot_begin.y]->setChessType(0);
             //
             this->chessLabelList[robot_end.x*(this->chessboardType) + robot_end.y]->setChessType(theFirstType);
-//            //撤销已经恢复的被吃棋子(robot)
-//            QList<PiecePos> eatList = redoStack_human.back().eat_pos_lst;
-//            for (int i=0; i<eatList.size(); ++i) {
-//                PiecePos eatPos = eatList[i];
-//                this->chessLabelList[eatPos.x*(this->chessboardType)+eatPos.y]->setChessType(0);
-//            }
+            //撤销已经恢复的被吃棋子(robot)
+            QList<PiecePos> eatList = redoStack_robot.back().eat_pos_lst;
+            for (int i=0; i<eatList.size(); ++i) {
+                PiecePos eatPos = eatList[i];
+                this->chessLabelList[eatPos.x*(this->chessboardType)+eatPos.y]->setChessType(0);
+            }
 
             this->historyStack_robot.push_back(this->redoStack_robot.back());
             this->redoStack_robot.pop_back();
