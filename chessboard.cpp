@@ -343,9 +343,9 @@ void Chessboard::setAllEmptyPositionEnabled(){
 //刷新棋盘
 void Chessboard::refreshChessBoard(){
     //遍历chessLabelList中的每一个标签
-    for(ChessLabel *currentChessLabel:this->chessLabelList){
+    for(ChessLabel *currentChessLabel:this->chessLabelList) {
         //只处理非Dormant的ChessLabel, Dormant的ChessLabel是不合法棋位
-        if(!currentChessLabel->isDormant()){
+        if(!currentChessLabel->isDormant()) {
 
 
 
@@ -364,18 +364,20 @@ void Chessboard::refreshChessBoard(){
            }
 
            //设置哪方棋子不可以点击：根据全局变量 redGuiPieceAvailable的值
-           if(!redGuiPieceAvailable){
+           if(!redGuiPieceAvailable) {
                 if(currentChessLabel->getChessType() == -1 || currentChessLabel->getChessType() == -2)
                     currentChessLabel->setDisabled(true);
-            }else{//红方棋子可点击，那就意味着黑方棋子不可点击
+           }
+           else {//红方棋子可点击，那就意味着黑方棋子不可点击
                 if(currentChessLabel->getChessType() == 1 || currentChessLabel->getChessType() == 2)
                     currentChessLabel->setDisabled(true);
-            }
+           }
 
 
 
 
-        }else{//不合法棋位都是不可以点击的
+        }
+        else{//不合法棋位都是不可以点击的
             currentChessLabel->setDisabled(true);
         }
 
@@ -1550,6 +1552,10 @@ void Chessboard::undo()
             this->chessLabelList[human_end.x*(this->chessboardType) + human_end.y]->setChessType(0);
             //
             this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->setChessType(theFirstType);
+            //该位置肯定为可点击
+            if (!this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->isEnabled())
+                this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->setEnabled(true);
+
             //恢复已吃棋子(human)
             QList<PiecePos> eatList = historyStack_human.back().eat_pos_lst;
             for (int i=0; i<eatList.size(); ++i) {
