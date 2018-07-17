@@ -1070,7 +1070,8 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                         this->chessLabelList[middlePosition.first*(this->chessboardType) + middlePosition.second]->setChessType(0);
                     }
 
-                }else{//如果第一次点击的是王子，则直接修改与王子落子临近的那个位置
+                }
+                else {//如果第一次点击的是王子，则直接修改与王子落子临近的那个位置
 
                     QPair<int,int> beginPosition = clickedPositionList[0];
                     QPair<int,int> targetPosition = clickedPositionList[1];
@@ -1087,22 +1088,21 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                     tempPosition.first += unitVector.first;
                     tempPosition.second += unitVector.second;
 
-                    while(tempPosition != beginPosition){
-                       if(int tempType = this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->getChessType() != 0){
+                    while(tempPosition != beginPosition) {
+                        int tempType = this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->getChessType();
+                        if(tempType != 0) {
 
-                           PiecePos eatPos = PiecePos(tempPosition.first, tempPosition.second, tempType);
-                           eat_lst.push_back(eatPos);
+                            PiecePos eatPos = PiecePos(tempPosition.first, tempPosition.second, tempType);
+                            eat_lst.push_back(eatPos);
 
-                           this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->setChessType(0);
-                           break;//吃掉一个子后就结束吃子
-                       }
+                            this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->setChessType(0);
+                            break;//吃掉一个子后就结束吃子
+                        }
 
-                       tempPosition.first += unitVector.first;
-                       tempPosition.second += unitVector.second;
+                        tempPosition.first += unitVector.first;
+                        tempPosition.second += unitVector.second;
 
                     }
-
-
                 }
                 //---------------------吃子结束----------------------------//
 
