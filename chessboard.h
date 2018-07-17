@@ -27,6 +27,11 @@ struct StackElement
 {
     QPair<PiecePos, PiecePos> begin_end_pos;
     QList<PiecePos> eat_pos_lst;
+
+    StackElement(QPair<PiecePos, PiecePos> b_e_p) :
+        begin_end_pos(b_e_p)
+    {}
+
     StackElement(QPair<PiecePos,PiecePos> b_e_p, QList<PiecePos> e_p_lst) :
         begin_end_pos(b_e_p), eat_pos_lst(e_p_lst)
     {}

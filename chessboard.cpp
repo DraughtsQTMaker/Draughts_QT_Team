@@ -1166,7 +1166,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 this->judge();
 
                 //然后调用robot,来获得新的下棋结果
-                if(consecutiveEating == false){//如果当前手动走棋方不具备连续跳吃条件
+                if(consecutiveEating == false) {//如果当前手动走棋方不具备连续跳吃条件
 
                    //qDebug() <<"The opponent begin to move...";
                    //qDebug()<<"Before Move, the previous chessStatus is:";
@@ -1181,8 +1181,15 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                    //-------------------Robot下完棋后，再进行一次判断------------------------//
                    this->judge();
                 }
+                else {
+                    PiecePos end_pos = historyStack_robot.back().begin_end_pos.second;
+                    PiecePos begin_pos = end_pos;
+                    StackElement elem = StackElement(QPair<PiecePos,PiecePos>(begin_pos, end_pos));
+                    historyStack_robot.push_back(elem);
+                }
 
-            }else{//如果点击的第二个位置也是非空棋位，那么修改第一个点击位置作废，第二个位置当做第一个位置.并重新显示该最后点击棋子可以落子
+            }
+            else {//如果点击的第二个位置也是非空棋位，那么修改第一个点击位置作废，第二个位置当做第一个位置.并重新显示该最后点击棋子可以落子
                 //的位置
                 QPair<int,int> temp = clickedPositionList[1];
                 int type = this->chessLabelList[temp.first*(this->chessboardType)+temp.second]->getChessType();
@@ -1461,6 +1468,8 @@ void Chessboard::robotAction(){
         this->redoStack_human.clear();
     if (!this->redoStack_robot.empty())
         this->redoStack_robot.clear();
+    this->undoButton->setDisabled(true);
+    this->redoButton->setDisabled(true);
 
     //根据chessLabelList生成ChessStatus对象
     this->getCurrentChessStatusFromChessLabelList();
@@ -1505,6 +1514,8 @@ void Chessboard::manAction(){
         this->redoStack_human.clear();
     if (!this->redoStack_robot.empty())
         this->redoStack_robot.clear();
+    this->undoButton->setDisabled(true);
+    this->redoButton->setDisabled(true);
 
     //初始化一个棋盘上需要的Chess Label List
 	Checker_CheckerState::setEvaluateBlack(false);
@@ -1527,6 +1538,9 @@ void Chessboard::repealConsecutiveEating(){
     if(consecutiveEating == true){
         //一旦撤销了连续跳吃，那么就应该把控制权返回给Robot
         consecutiveEating = false;
+
+        //由于连吃，在historyStack_robot栈中多加了一个元素，要弹出
+        this->historyStack_robot.pop_back();
 
         //------------------在机器方开始下之前，先判断当前手动下棋方是否取胜---------------//
         this->judge();
