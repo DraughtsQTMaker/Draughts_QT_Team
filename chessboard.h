@@ -13,12 +13,12 @@
 
 struct PiecePos
 {
-    int x;
-    int y;
+    int row;
+    int col;
     int chessType;
 
-    PiecePos(int x, int y, int type=0) :
-        x(x), y(y), chessType(type)
+    PiecePos(int row, int col, int type=0) :
+        row(row), col(col), chessType(type)
     {}
 
 };

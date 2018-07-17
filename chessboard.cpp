@@ -1564,14 +1564,14 @@ void Chessboard::undo()
 
             //修改行棋目标位置的棋位为空；设置行棋原始位置的棋子类型
             //
-            this->chessLabelList[robot_end.x*(this->chessboardType) + robot_end.y]->setChessType(0);
+            this->chessLabelList[robot_end.row*(this->chessboardType) + robot_end.col]->setChessType(0);
             //
-            this->chessLabelList[robot_begin.x*(this->chessboardType) + robot_begin.y]->setChessType(theFirstType);
+            this->chessLabelList[robot_begin.row*(this->chessboardType) + robot_begin.col]->setChessType(theFirstType);
             //恢复已吃棋子(robot)
             QList<PiecePos> eatList = historyStack_robot.back().eat_pos_lst;
             for (int i=0; i<eatList.size(); ++i) {
                 PiecePos eatPos = eatList[i];
-                this->chessLabelList[eatPos.x*(this->chessboardType)+eatPos.y]->setChessType(eatPos.chessType);
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(eatPos.chessType);
             }
             this->redoStack_robot.push_back(this->historyStack_robot.back());
             this->historyStack_robot.pop_back();
@@ -1583,22 +1583,22 @@ void Chessboard::undo()
             PiecePos human_begin = historyStack_human.back().begin_end_pos.first;
             PiecePos human_end = historyStack_human.back().begin_end_pos.second;
 
-            int p = human_end.x*(this->chessboardType) + human_end.y;
+            int p = human_end.row*(this->chessboardType) + human_end.col;
             int theFirstType = this->chessLabelList[p]->getChessType();
             //修改行棋目标位置的棋位为空；设置行棋原始位置的棋子类型
             //
-            this->chessLabelList[human_end.x*(this->chessboardType) + human_end.y]->setChessType(0);
+            this->chessLabelList[human_end.row*(this->chessboardType) + human_end.col]->setChessType(0);
             //
-            this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->setChessType(theFirstType);
+            this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->setChessType(theFirstType);
             //该位置肯定为可点击
-            if (!this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->isEnabled())
-                this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->setEnabled(true);
+            if (!this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->isEnabled())
+                this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->setEnabled(true);
 
             //恢复已吃棋子(human)
             QList<PiecePos> eatList = historyStack_human.back().eat_pos_lst;
             for (int i=0; i<eatList.size(); ++i) {
                 PiecePos eatPos = eatList[i];
-                this->chessLabelList[eatPos.x*(this->chessboardType)+eatPos.y]->setChessType(eatPos.chessType);
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(eatPos.chessType);
             }
 
             this->redoStack_human.push_back(this->historyStack_human.back());
@@ -1638,18 +1638,18 @@ void Chessboard::redo()
             PiecePos human_begin = redoStack_human.back().begin_end_pos.first;
             PiecePos human_end = redoStack_human.back().begin_end_pos.second;
 
-            int p = human_begin.x*(this->chessboardType) + human_begin.y;
+            int p = human_begin.row*(this->chessboardType) + human_begin.col;
             int theFirstType = this->chessLabelList[p]->getChessType();
             //修改行棋原始位置的棋位为空；设置行棋目标位置的棋子类型
             //
-            this->chessLabelList[human_begin.x*(this->chessboardType) + human_begin.y]->setChessType(0);
+            this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->setChessType(0);
             //
-            this->chessLabelList[human_end.x*(this->chessboardType) + human_end.y]->setChessType(theFirstType);
+            this->chessLabelList[human_end.row*(this->chessboardType) + human_end.col]->setChessType(theFirstType);
             //撤销已经恢复的被吃棋子(human)
             QList<PiecePos> eatList = redoStack_human.back().eat_pos_lst;
             for (int i=0; i<eatList.size(); ++i) {
                 PiecePos eatPos = eatList[i];
-                this->chessLabelList[eatPos.x*(this->chessboardType)+eatPos.y]->setChessType(0);
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(0);
             }
 
             this->historyStack_human.push_back(this->redoStack_human.back());
@@ -1662,18 +1662,26 @@ void Chessboard::redo()
             PiecePos robot_begin = redoStack_robot.back().begin_end_pos.first;
             PiecePos robot_end = redoStack_robot.back().begin_end_pos.second;
 
-            int p = robot_begin.x*(this->chessboardType) + robot_begin.y;
+            int p = robot_begin.row*(this->chessboardType) + robot_begin.col;
             int theFirstType = this->chessLabelList[p]->getChessType();
+
+            // 当出现王棋时
+            int _row = robot_end.row;
+            if ((theFirstType == -1) && (_row == 0))
+                theFirstType -= 1;
+            if ((theFirstType == 1) && (_row == this->chessboardType-1))
+                theFirstType += 1;
+
             //修改行棋原始位置的棋位为空；设置行棋目标位置的棋子类型
             //
-            this->chessLabelList[robot_begin.x*(this->chessboardType) + robot_begin.y]->setChessType(0);
+            this->chessLabelList[robot_begin.row*(this->chessboardType) + robot_begin.col]->setChessType(0);
             //
-            this->chessLabelList[robot_end.x*(this->chessboardType) + robot_end.y]->setChessType(theFirstType);
+            this->chessLabelList[robot_end.row*(this->chessboardType) + robot_end.col]->setChessType(theFirstType);
             //撤销已经恢复的被吃棋子(robot)
             QList<PiecePos> eatList = redoStack_robot.back().eat_pos_lst;
             for (int i=0; i<eatList.size(); ++i) {
                 PiecePos eatPos = eatList[i];
-                this->chessLabelList[eatPos.x*(this->chessboardType)+eatPos.y]->setChessType(0);
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(0);
             }
 
             this->historyStack_robot.push_back(this->redoStack_robot.back());
