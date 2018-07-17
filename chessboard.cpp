@@ -1106,7 +1106,8 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 }
                 //---------------------吃子结束----------------------------//
 
-                PiecePos human_begin = {clickedPositionList[0].first, clickedPositionList[0].second};
+                int type = this->chessLabelList[clickedPositionList[0].first *(this->chessboardType)+ clickedPositionList[0].second]->getChessType();
+                PiecePos human_begin = {clickedPositionList[0].first, clickedPositionList[0].second, type};
                 PiecePos human_end = {clickedPositionList[1].first, clickedPositionList[1].second};
                 StackElement elem = StackElement(QPair<PiecePos,PiecePos>(human_begin,human_end), eat_lst);
 //                this->historyStack_human.push_back(QPair<PiecePos,PiecePos>(human_begin, human_end));
@@ -1597,8 +1598,11 @@ void Chessboard::undo()
             PiecePos human_begin = historyStack_human.back().begin_end_pos.first;
             PiecePos human_end = historyStack_human.back().begin_end_pos.second;
 
-            int p = human_end.row*(this->chessboardType) + human_end.col;
-            int theFirstType = this->chessLabelList[p]->getChessType();
+//            int p = human_end.row*(this->chessboardType) + human_end.col;
+//            int theFirstType = this->chessLabelList[p]->getChessType();
+
+            int theFirstType = human_begin.chessType;
+
             //修改行棋目标位置的棋位为空；设置行棋原始位置的棋子类型
             //
             this->chessLabelList[human_end.row*(this->chessboardType) + human_end.col]->setChessType(0);
@@ -1654,6 +1658,15 @@ void Chessboard::redo()
 
             int p = human_begin.row*(this->chessboardType) + human_begin.col;
             int theFirstType = this->chessLabelList[p]->getChessType();
+
+            // 当出现王棋时(human)
+            int _row = human_end.row;
+            if ((theFirstType == -1) && (_row == 0))
+                theFirstType -= 1;
+            if ((theFirstType == 1) && (_row == this->chessboardType-1))
+                theFirstType += 1;
+
+
             //修改行棋原始位置的棋位为空；设置行棋目标位置的棋子类型
             //
             this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->setChessType(0);
@@ -1679,7 +1692,7 @@ void Chessboard::redo()
             int p = robot_begin.row*(this->chessboardType) + robot_begin.col;
             int theFirstType = this->chessLabelList[p]->getChessType();
 
-            // 当出现王棋时
+            // 当出现王棋时(robot)
             int _row = robot_end.row;
             if ((theFirstType == -1) && (_row == 0))
                 theFirstType -= 1;
