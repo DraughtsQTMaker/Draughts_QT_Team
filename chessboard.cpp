@@ -1114,7 +1114,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 this->historyStack_human.push_back(elem);
 
                 if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
-                        && !this->undoButton->isEnabled())
+                        && !this->undoButton->isEnabled() && !consecutiveEating)
                     this->undoButton->setEnabled(true);
 
                 if (!this->redoStack_human.empty())
@@ -1122,7 +1122,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 if (!this->redoStack_robot.empty())
                     this->redoStack_robot.clear();
                 if ((this->redoStack_human.empty() || this->redoStack_robot.empty())
-                        && this->redoButton->isEnabled())
+                        && this->redoButton->isEnabled() && !consecutiveEating)
                     this->redoButton->setDisabled(true);
 
 
@@ -1531,6 +1531,10 @@ void Chessboard::beginConsecutiveEating(){
     consecutiveEating = true;
     this->beginConsecutiveEatingButton->setDisabled(true);
     this->repealConsecutiveEatingButton->setDisabled(false);
+
+    //在没有结束连吃时，暂时禁止undo & redo操作
+    this->undoButton->setDisabled(true);
+    this->redoButton->setDisabled(true);
 }
 
 //SLOTS
@@ -1554,6 +1558,13 @@ void Chessboard::repealConsecutiveEating(){
 
         this->beginConsecutiveEatingButton->setDisabled(false);
         this->repealConsecutiveEatingButton->setDisabled(true);
+
+        //结束连吃，恢复undo & redo操作
+        if (!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+            this->undoButton->setEnabled(true);
+        if (!(this->redoStack_human.empty() || this->redoStack_robot.empty()))
+            this->redoButton->setEnabled(true);
+
     }
 }
 
