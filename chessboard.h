@@ -127,7 +127,8 @@ private:
     QList<PiecePos> getMiddleEatedPoses(PiecePos begin_pos, PiecePos end_pos, QList<PiecePos> eat_lst);
     bool searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_pos, QList<PiecePos>& midPoses,
                                         QList<PiecePos> eat_lst, bool visited[]);
-    bool searchPathByEatedPoses4King();
+    bool searchPathByEatedPoses4King(PiecePos curPos, PiecePos end_pos, QList<PiecePos>& midPoses,
+                                     QList<PiecePos> eat_lst, bool visited[]);
 
 public:
 

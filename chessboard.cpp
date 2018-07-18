@@ -2172,6 +2172,7 @@ QList<PiecePos> Chessboard::getMiddleEatedPoses(PiecePos begin_pos, PiecePos end
         bool* visited = new bool[eat_lst.size()];
         if (searchPathByEatedPoses4NonKing(begin_pos, end_pos, mid_poses, eat_lst, visited)) {
             mid_poses.pop_back();
+            delete[] visited;
             return mid_poses;
         }
 
