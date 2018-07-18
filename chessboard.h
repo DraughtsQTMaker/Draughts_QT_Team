@@ -1,6 +1,7 @@
 #ifndef CHESSBOARD_H
 #define CHESSBOARD_H
 
+#include <time.h>
 #include <QLabel>
 #include <QPushButton>
 #include <QGridLayout>
@@ -133,6 +134,25 @@ public:
 
     //机器方下棋
     int robotPlay();
+
+    //记录第几回合
+    int count=0;
+
+
+    // 回合完毕后，写入字符串
+    void  writeText(QString str);
+    //悔棋 ，更改最后一行记录，写入新字符串 newStr
+    void writeNewText(QString newStr);
+
+
+    // 创建打谱文件  返回文件路径
+    /*输入：先手名称、后手名称
+                返回：创建文件名*/
+    void createText(QString first, QString second);
+
+
+      /*打谱TXT重命名 */
+  void reNameForText(QString first, QString second,QString winner);
 
 
 signals:
