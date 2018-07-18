@@ -2,6 +2,7 @@
 #define CHESSBOARD_H
 
 #include <time.h>
+#include <string>
 #include <QLabel>
 #include <QPushButton>
 #include <QGridLayout>
@@ -136,7 +137,7 @@ public:
     int robotPlay();
 
     //记录第几回合
-    int count=0;
+    int count=1;
 
 
     // 回合完毕后，写入字符串
@@ -150,9 +151,17 @@ public:
                 返回：创建文件名*/
     void createText(QString first, QString second);
 
+     QString result="";
+    /*打谱TXT重命名 */
+    void reNameForText();
 
-      /*打谱TXT重命名 */
-    void reNameForText(QString first, QString second,QString winner);
+    //写入结果 例如 结果：1-0
+    void writeResult(QString result);
+
+    void testTxt();
+    //删除文本最后一行
+    void delLastLine();
+
 
 
 signals:
