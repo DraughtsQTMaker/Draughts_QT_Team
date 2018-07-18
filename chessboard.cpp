@@ -101,12 +101,16 @@ void Chessboard::initializeChessLabelList(){
                 QString tempRow = QString::number(i);
                 QString tempCol = QString::number(j);
                 QString tempString = tempRow + "," + tempCol;
+
+                int tempLegal = i*10/2 + j/2 + 1;
+                QString tempLegalStr = QString::number(tempLegal);
+
                 //通过HTML语言来设置Label上字体的颜色
-                tempString = "<font color=blue>" + tempString +"</font>";
+                tempString = "<font color=blue>" + tempString + "\t(" + tempLegalStr + ")" +"</font>";
                 ChessLabel * currentLabel = this->chessLabelList[k++];
                 currentLabel->setText(tempString);
                 currentLabel->setMargin(0);
-                currentLabel->setFont(QFont("Timers" , 7 ,  QFont::Bold));
+                currentLabel->setFont(QFont("Timers" , 12 ,  QFont::Bold));
 
                 //
                 currentLabel->setAlignment(Qt::AlignBottom);
@@ -178,13 +182,17 @@ void Chessboard::initializeChessLabelList(){
                 QString tempRow = QString::number(i);
                 QString tempCol = QString::number(j);
                 QString tempString = tempRow + "," + tempCol;
+
+                int tempLegal = i*8/2 + j/2 + 1;
+                QString tempLegalStr = QString::number(tempLegal);
+
                 //通过HTML语言来设置Label上字体的颜色
-                tempString = "<font color=blue>" + tempString +"</font>";
+                tempString = "<font color=blue>" + tempString + "\t (" + tempLegalStr + ")" +"</font>";
                 ChessLabel * currentLabel = this->chessLabelList[k++];
 //                qDebug()<<k;
                 currentLabel->setText(tempString);
                 currentLabel->setMargin(0);
-                currentLabel->setFont(QFont("Timers" , 7 ,  QFont::Bold));
+                currentLabel->setFont(QFont("Timers" , 12 ,  QFont::Bold));
 
                 //设置对其方式
                 currentLabel->setAlignment(Qt::AlignBottom);
@@ -1165,7 +1173,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                     legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
                 }
                 if (doShow) {
-                    this->pathLabel->setText(debugInfoShow + "\t |" + legalInfoShow);
+                    this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
                     debugInfoShow.clear();
                     legalInfoShow.clear();
                     doShow = false;
@@ -1432,10 +1440,21 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
                 legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
             }
             else { // 连跳走步
+                legalInfoShow.append(legal_begin_str + "x");
+                QList<PiecePos> mid_poses = this->getMiddleEatedPoses(robot_begin, robot_end, eat_lst);
+                for (int i=0; i<mid_poses.size(); ++i) {
+                    int mid_row = mid_poses[i].row;
+                    int mid_col = mid_poses[i].col;
+                    int mid_legal = mid_row*this->chessboardType/2 + mid_col/2 + 1;
+                    QString mid_legal_str = mid_legal/10 == 0 ? "0"+QString::number(mid_legal)
+                                                              : QString::number(mid_legal);
+                    legalInfoShow.append(mid_legal_str + "x");
+                }
+                legalInfoShow.append(legal_end_str);
             }
 
             if (doShow) {
-                this->pathLabel->setText(debugInfoShow + "\t |" + legalInfoShow);
+                this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
                 debugInfoShow.clear();
                 legalInfoShow.clear();
                 doShow = false;
@@ -1576,10 +1595,16 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
                 legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
             }
             else { // 连跳走步
+                if (type % 2 != 0) { //not king
+
+                }
+                else {  //is king
+
+                }
             }
 
             if (doShow) {
-                this->pathLabel->setText(debugInfoShow + "\t |" + legalInfoShow);
+                this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
                 debugInfoShow.clear();
                 legalInfoShow.clear();
                 doShow = false;
@@ -2027,5 +2052,64 @@ void Chessboard::reNameForText(QString first, QString second, QString winner)
     //编码有问题
     bool ok = file.rename(newFileName);
     file.close();
+
+}
+
+QList<PiecePos> Chessboard::getMiddleEatedPoses(PiecePos begin_pos, PiecePos end_pos, QList<PiecePos> eat_lst)
+{
+    int type = begin_pos.chessType;
+    QList<PiecePos> mid_poses;
+
+    if (type % 2 != 0) { //not king
+        bool* visited = new bool[eat_lst.size()];
+        if (searchPathByEatedPoses4NonKing(begin_pos, end_pos, mid_poses, eat_lst, visited)) {
+            mid_poses.pop_back();
+            return mid_poses;
+        }
+
+    }
+    else { //is king
+
+    }
+}
+
+bool Chessboard::searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_pos, QList<PiecePos> &midPoses,
+                                                QList<PiecePos> eat_lst, bool visited[])
+{
+    if ((curPos.row == end_pos.row) && (curPos.col == end_pos.col))
+        return true;
+
+    for (int i=0; i<eat_lst.size(); ++i) {
+        if (!visited[i]) {
+            int eat_row = eat_lst[i].row;
+            int eat_col = eat_lst[i].col;
+            int offset_row = eat_row - curPos.row;
+            int offset_col = eat_col - curPos.col;
+            if (std::abs(offset_row) == 1 && std::abs(offset_col) == 1) {
+
+                int mid_row = eat_row + offset_row;
+                int mid_col = eat_col + offset_col;
+
+                if ((mid_row >= 0 && mid_row < this->chessboardType) &&
+                        (mid_col >=0 && mid_col < this->chessboardType)) {
+                    visited[i] = true;
+                    PiecePos mid_Pos = PiecePos(mid_row, mid_col);
+                    midPoses.push_back(mid_Pos);
+
+                    if (searchPathByEatedPoses4NonKing(mid_Pos, end_pos, midPoses, eat_lst, visited))
+                        return true;
+
+                    visited[i] = false;
+                    midPoses.pop_back();
+
+                }
+
+            }
+
+        }
+    }
+
+    return false;
+
 
 }

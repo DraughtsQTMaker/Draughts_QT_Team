@@ -11,13 +11,13 @@ MainWindow::MainWindow(QWidget* parent) :
     this->askDialog->resize(300, 150);
 
     this->firstName= new QLabel("先手:", this->askDialog);
-    //firstName->setGeometry(10,10,30,30);
     this->secondName= new QLabel("后手:", this->askDialog);
-    // secondName->setGeometry(50,10,30,30);
+
     this->firstEdit=new QLineEdit(this->askDialog);
-    //firstEdit->setGeometry(45,10,200,30);
+    this->firstEdit->setText("first side");
+
     this->secondEdit=new QLineEdit(this->askDialog);
-    //secondEdit->setGeometry(45,50,200,30);
+    this->secondEdit->setText("second side");
 
     this->labelTex = new QLabel("Please select the version:", this->askDialog);
 

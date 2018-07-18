@@ -123,6 +123,10 @@ private:
     //判断输赢
     void judge();
 
+    QList<PiecePos> getMiddleEatedPoses(PiecePos begin_pos, PiecePos end_pos, QList<PiecePos> eat_lst);
+    bool searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_pos, QList<PiecePos>& midPoses,
+                                        QList<PiecePos> eat_lst, bool visited[]);
+    bool searchPathByEatedPoses4King();
 
 public:
 
