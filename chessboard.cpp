@@ -1596,12 +1596,17 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
                 legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
             }
             else { // 连跳走步
-                if (type % 2 != 0) { //not king
-
+                legalInfoShow.append(legal_begin_str + "x");
+                QList<PiecePos> mid_poses = this->getMiddleEatedPoses(robot_begin, robot_end, eat_lst);
+                for (int i=0; i<mid_poses.size(); ++i) {
+                    int mid_row = mid_poses[i].row;
+                    int mid_col = mid_poses[i].col;
+                    int mid_legal = mid_row*this->chessboardType/2 + mid_col/2 + 1;
+                    QString mid_legal_str = mid_legal/10 == 0 ? "0"+QString::number(mid_legal)
+                                                              : QString::number(mid_legal);
+                    legalInfoShow.append(mid_legal_str + "x");
                 }
-                else {  //is king
-
-                }
+                legalInfoShow.append(legal_end_str);
             }
 
             if (doShow) {
