@@ -10,5 +10,10 @@ extern bool redGuiPieceAvailable;
 
 extern bool consecutiveEating;
 
+
+extern QString path;
+extern QString first;
+extern QString second;
+
 extern bool gameOver;
 #endif // GLOBALVARIABLE_H
