@@ -10,6 +10,15 @@ MainWindow::MainWindow(QWidget* parent) :
     this->askDialog = new QDialog(0, Qt::SplashScreen | Qt::WindowStaysOnTopHint);
     this->askDialog->resize(300, 150);
 
+    this->firstName= new QLabel("先手:", this->askDialog);
+    //firstName->setGeometry(10,10,30,30);
+    this->secondName= new QLabel("后手:", this->askDialog);
+    // secondName->setGeometry(50,10,30,30);
+    this->firstEdit=new QLineEdit(this->askDialog);
+    //firstEdit->setGeometry(45,10,200,30);
+    this->secondEdit=new QLineEdit(this->askDialog);
+    //secondEdit->setGeometry(45,50,200,30);
+
     this->labelTex = new QLabel("Please select the version:", this->askDialog);
 
     this->mode64 = new QRadioButton("64", this->askDialog);
@@ -21,8 +30,14 @@ MainWindow::MainWindow(QWidget* parent) :
 
     this->mainLayout = new QVBoxLayout();
     this->labelLayout = new QHBoxLayout();
+    this->playerSideLayout = new QHBoxLayout();
     this->radioLayout = new QHBoxLayout();
     this->butLayout = new QHBoxLayout();
+
+    this->playerSideLayout->addWidget(this->firstName);
+    this->playerSideLayout->addWidget(this->firstEdit);
+    this->playerSideLayout->addWidget(this->secondName);
+    this->playerSideLayout->addWidget(this->secondEdit);
 
     this->labelLayout->addWidget(this->labelTex);
 
@@ -31,6 +46,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     this->butLayout->addWidget(this->confirmBut);
 
+    this->mainLayout->addLayout(playerSideLayout);
     this->mainLayout->addLayout(labelLayout);
     this->mainLayout->addLayout(radioLayout);
     this->mainLayout->addLayout(butLayout);
@@ -52,6 +68,9 @@ void MainWindow::showDialog()
 
 void MainWindow::accept()
 {
+    first=firstEdit->text();
+    second=secondEdit->text();
+
     // check the status of radio buttons
     // when 64 version button is checked
     if (this->mode64->isChecked()) {

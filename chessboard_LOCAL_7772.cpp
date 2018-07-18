@@ -14,8 +14,6 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->chessboardType = chessboardType;
     this->layerNumber = layerNumberOfSearch;
 
-    this->createText(first ,second );
-
     //初始化chessLabelList
     this->initializeChessLabelList();
 
@@ -1059,17 +1057,6 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
 //                qDebug()<< "人起子位置：("<<clickedPositionList[0].first <<",\t" << clickedPositionList[0].second <<")";
 //                qDebug()<< "人落子位置：("<<clickedPositionList[1].first << ",\t" << clickedPositionList[1].second <<")";
 
-                //
-                /*
-                int legalBeginPosition = clickedPositionList[0].first * this->chessboardType / 2 + clickedPositionList[0].second  + 1;
-                QString legalBeginPositionString = QString::number(legalBeginPosition);
-                int legalTargetPosition = clickedPositionList[1].first * this->chessboardType / 2 + clickedPositionList[1].second + 1;
-                QString legalTargetPositionString = QString::number(legalTargetPosition);
-                writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-                count++;
-                if(count%2==0){
-                    this->writeText(this->writcontent);
-                }*/
                 //吃子----------------------开始吃子--------------------------//
                 QList<PiecePos> eat_lst;
                 //如果第一次点击的是非王子（单吃）
@@ -1377,7 +1364,7 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
     }
 
     for (int i = 0; i < oldPositionList.size();i++) {
-        if (oldPositionList[i] != newPositionList[i]) {
+        if (oldPositionList[i] != newPositionList[i]){
             QString beginPosition = "[" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + "]";
             int legalBeginPosition = oldPositionList[i].first * this->chessboardType / 2 + oldPositionList[i].second /2 + 1;
             QString legalBeginPositionString = QString::number(legalBeginPosition);
@@ -1446,20 +1433,17 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
 //            QString legalTargetPositionString = QString::number(legalTargetPosition);
 //            infoShow = beginPosition + "-->" + targetPosition + "\t(" + legalBeginPositionString + "-->" + legalTargetPositionString + ")";
 
-           /*
-            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-                        count++;
-                        if(count%2==0){
-                            this->writeText(this->writcontent);
-            }
-            */
         }
-
     }
+    //显示在Label上
+
+
 
 }
 
-void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus) {//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
+
+
+void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus){//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
     std::vector<std::pair<int, int> > oldPositionList;
     std::vector<std::pair<int, int> > newPositionList;
 
@@ -1590,14 +1574,6 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
 //            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
 //            QString legalTargetPositionString = QString::number(legalTargetPosition);
 //            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
-            //
-            /*
-            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-            count++;
-            if(count%2==0){
-                this->writeText(this->writcontent);
-            }
-            */
         }
     }
 
@@ -1668,7 +1644,7 @@ void Chessboard::robotAction(){
 }
 
 //SLOTS
-void Chessboard::manAction() {
+void Chessboard::manAction(){
 
     gameOver = false;
     //当人先下棋时,此时机器方应该是红子，所以blackTurn为False。人先下，所以人为黑子，所以可以点击的是黑子，红子不可点击
@@ -1704,7 +1680,7 @@ void Chessboard::manAction() {
 }
 
 //SLOTS
-void Chessboard::beginConsecutiveEating() {
+void Chessboard::beginConsecutiveEating(){
     consecutiveEating = true;
     this->beginConsecutiveEatingButton->setDisabled(true);
     this->repealConsecutiveEatingButton->setDisabled(false);
@@ -1921,8 +1897,7 @@ void Chessboard::redo()
 }
 
 //判断棋盘局面输赢
-void Chessboard::judge()
-{
+void Chessboard::judge(){
     //遍历chessLabelList，记录前端黑方、红方剩余棋子的个数
     int existedBlackUiPieceCounter = 0;
     int existedRedUiPieceCounter = 0;
@@ -1947,85 +1922,4 @@ void Chessboard::judge()
         this->setAllChessLabelDisabled();
         gameOver = true;
     }
-}
-
-//
-void Chessboard::writeText(QString str)
-{
-
-
-    str=QString::number(count)+"."+str;
-
-
-    QFile file(path);
-    //文件尾添加
-    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Append))
-
-    {
-
-        qDebug()<<"Can't open the file!"<<endl;
-
-    }
-    QTextStream out(&file);
-    out << str;
-    out << "\n";
-    file.close();
-    count++;
-}
-
-void Chessboard::writeNewText(QString newStr)
-{
-
-}
-
-
-// 创建打谱文件  返回文件路径
-/*输入：先手名称、后手名称
-返回：创建文件名
-*/
-void Chessboard::createText(QString first, QString second)
-{
-    QFile file(path);
-    //文件尾添加
-    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Truncate)) {
-
-        qDebug()<<"Can't open the file!"<<endl;
-
-    }
-    QTextStream out(&file);
-    QDateTime da_time;
-    QString time_str=da_time.currentDateTime().toString("yyyy-MM-dd");
-    out<<QObject::trUtf8("时间:") <<time_str<<"\n";
-    out<<QObject::trUtf8("先手:1") <<"\n";
-    out<<QObject::trUtf8("先手:") <<first<<"\n";
-    out<<QObject::trUtf8("后手:") <<second<<"\n";
-    out<<QObject::trUtf8("结果:")<< "\n";
-
-    file.close();
-}
-
-
-
-/*打谱TXT重命名 */
-void Chessboard::reNameForText(QString first, QString second, QString winner)
-{
-    //更改文件中结果行
-    //若上方棋子胜利，记录格式为“结果：1-0”；若下方棋子胜利，记 录格式为“结果：0-1”；若为平局，记录格式为“结果：*”。
-
-
-
-    //文件重命名
-    QFile file(path);
-    QDateTime da_time;
-    QString time_str=da_time.currentDateTime().toString("yyyy-MM-dd");
-    //文件名的格式为：“ DR8 - 先手参赛队A vs后手参赛队B - 先（后） 手胜 - 比赛时间地点 - 赛事名称”，文件的扩展名为 txt
-    QString newFileName="";
-    /*
-    "DR"+chessboardType+"-先手参赛队"+first+"vs后手参赛队"+second+"-"+winner+"-"+time_str+"安徽大学"
-            +"-2018年中国大学生计算机博弈大赛.txt";
-     */
-    //编码有问题
-    bool ok = file.rename(newFileName);
-    file.close();
-
 }

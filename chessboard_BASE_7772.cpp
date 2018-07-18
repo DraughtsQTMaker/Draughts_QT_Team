@@ -3,18 +3,12 @@
 
 extern QHash<QByteArray, QPair<double, int> > blackHashTable;
 
-QString debugInfoShow = "";
-QString legalInfoShow = "";
-bool doShow = false;
-
 //构造函数
 Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearch) :
     QLabel(parent)
 {
     this->chessboardType = chessboardType;
     this->layerNumber = layerNumberOfSearch;
-
-    this->createText(first ,second );
 
     //初始化chessLabelList
     this->initializeChessLabelList();
@@ -1056,20 +1050,9 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
 
 
 
-//                qDebug()<< "人起子位置：("<<clickedPositionList[0].first <<",\t" << clickedPositionList[0].second <<")";
-//                qDebug()<< "人落子位置：("<<clickedPositionList[1].first << ",\t" << clickedPositionList[1].second <<")";
+                qDebug()<< "人起子位置：("<<clickedPositionList[0].first <<",\t" << clickedPositionList[0].second <<")";
+                qDebug()<< "人落子位置：("<<clickedPositionList[1].first << ",\t" << clickedPositionList[1].second <<")";
 
-                //
-                /*
-                int legalBeginPosition = clickedPositionList[0].first * this->chessboardType / 2 + clickedPositionList[0].second  + 1;
-                QString legalBeginPositionString = QString::number(legalBeginPosition);
-                int legalTargetPosition = clickedPositionList[1].first * this->chessboardType / 2 + clickedPositionList[1].second + 1;
-                QString legalTargetPositionString = QString::number(legalTargetPosition);
-                writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-                count++;
-                if(count%2==0){
-                    this->writeText(this->writcontent);
-                }*/
                 //吃子----------------------开始吃子--------------------------//
                 QList<PiecePos> eat_lst;
                 //如果第一次点击的是非王子（单吃）
@@ -1130,48 +1113,6 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
 //                this->historyStack_human.push_back(QPair<PiecePos,PiecePos>(human_begin, human_end));
                 this->historyStack_human.push_back(elem);
 
-                int begin_row = human_begin.row;
-                int begin_col = human_begin.col;
-                int end_row = human_end.row;
-                int end_col = human_end.col;
-
-
-                int legal_begin = begin_row*this->chessboardType/2 + begin_col/2 + 1;
-                int legal_end = end_row*this->chessboardType/2 + end_col/2 + 1;
-                QString legal_begin_str = legal_begin/10 == 0 ? "0"+QString::number(legal_begin)
-                                                              : QString::number(legal_begin);
-                QString legal_end_str = legal_end/10 == 0 ? "0"+QString::number(legal_end)
-                                                          : QString::number(legal_end);
-
-
-                // 显示棋谱(human)
-                if (debugInfoShow.length() == 0) { // the first side is human
-                    debugInfoShow = "\t human: \t";
-                    legalInfoShow = "\t";
-                }
-                else { // the first side is robot
-                    doShow = true;
-                    debugInfoShow.append("\t human: \t");
-                    legalInfoShow.append("\t");
-                }
-                debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
-                debugInfoShow.append("-->");
-                debugInfoShow.append("[" + QString::number(end_row) + "," + QString::number(end_col) + "]");
-
-                if (elem.eat_pos_lst.size() == 0) { //不吃子走步
-                    legalInfoShow.append(legal_begin_str + "-" + legal_end_str);
-                }
-                else { //吃子走步
-                    legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
-                }
-                if (doShow) {
-                    this->pathLabel->setText(debugInfoShow + "\t |" + legalInfoShow);
-                    debugInfoShow.clear();
-                    legalInfoShow.clear();
-                    doShow = false;
-                }
-
-
                 if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
                         && !this->undoButton->isEnabled() && !consecutiveEating)
                     this->undoButton->setEnabled(true);
@@ -1190,7 +1131,6 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 this->chessLabelList[clickedPositionList[0].first *(this->chessboardType)+ clickedPositionList[0].second]->setChessType(0);
                 //
                 this->chessLabelList[clickedPositionList[1].first *(this->chessboardType)+ clickedPositionList[1].second]->setChessType(theFirstType);
-
 
 
                 //----------------判断是否成王---------------//在连续跳吃的情况下，判断成王的标准是，一旦落到边界其不能再跳吃了
@@ -1377,13 +1317,13 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
     }
 
     for (int i = 0; i < oldPositionList.size();i++) {
-        if (oldPositionList[i] != newPositionList[i]) {
-            QString beginPosition = "[" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + "]";
+        if (oldPositionList[i] != newPositionList[i]){
+            QString beginPosition = "(" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + ")";
             int legalBeginPosition = oldPositionList[i].first * this->chessboardType / 2 + oldPositionList[i].second /2 + 1;
             QString legalBeginPositionString = QString::number(legalBeginPosition);
 
-//            qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
-//            qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
+            qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
+            qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
 
             int type = this->chessLabelList[oldPositionList[i].first*this->chessboardType + oldPositionList[i].second]->getChessType();
             PiecePos robot_begin = {oldPositionList[i].first, oldPositionList[i].second, type};
@@ -1397,69 +1337,21 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
                     && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
                 this->undoButton->setEnabled(true);
 
-            //显示棋谱（robot: red side)
-            int begin_row = robot_begin.row;
-            int begin_col = robot_begin.col;
-            int end_row = robot_end.row;
-            int end_col = robot_end.col;
-
-            int legal_begin = begin_row*this->chessboardType/2 + begin_col/2 + 1;
-            int legal_end = end_row*this->chessboardType/2 + end_col/2 + 1;
-            QString legal_begin_str = legal_begin/10 == 0 ? "0"+QString::number(legal_begin)
-                                                          : QString::number(legal_begin);
-            QString legal_end_str = legal_end/10 == 0 ? "0"+QString::number(legal_end)
-                                                      : QString::number(legal_end);
-
-            if (debugInfoShow.length() != 0) { // the first side is human
-                doShow = true;
-                debugInfoShow.append("\t robot:\t");
-                legalInfoShow.append("\t");
-
-            }
-            else { // the first side is robot(red)
-                debugInfoShow = "\t robot:\t";
-                legalInfoShow = "\t";
-            }
-            debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
-            debugInfoShow.append("-->");
-            debugInfoShow.append("[" + QString::number(end_row) + "," + QString::number(end_col) + "]");
-
-
-            if (elem.eat_pos_lst.size() == 0) { // 不吃子走步
-                legalInfoShow.append(legal_begin_str + "-" + legal_end_str);
-            }
-            else if (elem.eat_pos_lst.size() == 1) { // 吃子走步
-                legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
-            }
-            else { // 连跳走步
-            }
-
-            if (doShow) {
-                this->pathLabel->setText(debugInfoShow + "\t |" + legalInfoShow);
-                debugInfoShow.clear();
-                legalInfoShow.clear();
-                doShow = false;
-            }
-
-//            QString targetPosition = "[" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + "]";
-//            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
-//            QString legalTargetPositionString = QString::number(legalTargetPosition);
-//            infoShow = beginPosition + "-->" + targetPosition + "\t(" + legalBeginPositionString + "-->" + legalTargetPositionString + ")";
-
-           /*
-            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-                        count++;
-                        if(count%2==0){
-                            this->writeText(this->writcontent);
-            }
-            */
+            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
+            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
+            QString legalTargetPositionString = QString::number(legalTargetPosition);
+            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
         }
-
     }
+    //显示在Label上
+
+
 
 }
 
-void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus) {//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
+
+
+void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus){//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
     std::vector<std::pair<int, int> > oldPositionList;
     std::vector<std::pair<int, int> > newPositionList;
 
@@ -1541,63 +1433,10 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
                     && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
                 this->undoButton->setEnabled(true);
 
-            //显示棋谱（robot: black side)
-            int begin_row = robot_begin.row;
-            int begin_col = robot_begin.col;
-            int end_row = robot_end.row;
-            int end_col = robot_end.col;
-
-            int legal_begin = begin_row*this->chessboardType/2 + begin_col/2 + 1;
-            int legal_end = end_row*this->chessboardType/2 + end_col/2 + 1;
-            QString legal_begin_str = legal_begin/10 == 0 ? "0"+QString::number(legal_begin)
-                                                          : QString::number(legal_begin);
-            QString legal_end_str = legal_end/10 == 0 ? "0"+QString::number(legal_end)
-                                                      : QString::number(legal_end);
-
-            if (debugInfoShow.length() != 0) { // the first side is human
-                doShow = true;
-                debugInfoShow.append("\t robot:\t");
-                legalInfoShow.append("\t");
-
-            }
-            else { // the first side is robot(black)
-                debugInfoShow = "\t robot:\t";
-                legalInfoShow = "\t";
-            }
-            debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
-            debugInfoShow.append("-->");
-            debugInfoShow.append("[" + QString::number(end_row) + "," + QString::number(end_col) + "]");
-
-
-            if (elem.eat_pos_lst.size() == 0) { // 不吃子走步
-                legalInfoShow.append(legal_begin_str + "-" + legal_end_str);
-            }
-            else if (elem.eat_pos_lst.size() == 1) { // 吃子走步
-                legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
-            }
-            else { // 连跳走步
-            }
-
-            if (doShow) {
-                this->pathLabel->setText(debugInfoShow + "\t |" + legalInfoShow);
-                debugInfoShow.clear();
-                legalInfoShow.clear();
-                doShow = false;
-            }
-
-
-//            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
-//            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
-//            QString legalTargetPositionString = QString::number(legalTargetPosition);
-//            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
-            //
-            /*
-            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-            count++;
-            if(count%2==0){
-                this->writeText(this->writcontent);
-            }
-            */
+            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
+            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
+            QString legalTargetPositionString = QString::number(legalTargetPosition);
+            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
         }
     }
 
@@ -1633,14 +1472,6 @@ void Chessboard::robotAction(){
     this->undoButton->setDisabled(true);
     this->redoButton->setDisabled(true);
 
-    if (debugInfoShow.length() != 0)
-        debugInfoShow.clear();
-    if (legalInfoShow.length() != 0)
-        legalInfoShow.clear();
-    if (doShow)
-        doShow = false;
-    this->pathLabel->clear();
-
     //根据chessLabelList生成ChessStatus对象
     this->getCurrentChessStatusFromChessLabelList();
     Checker_AlphaBetaSearch::totalStep = 0;
@@ -1668,7 +1499,7 @@ void Chessboard::robotAction(){
 }
 
 //SLOTS
-void Chessboard::manAction() {
+void Chessboard::manAction(){
 
     gameOver = false;
     //当人先下棋时,此时机器方应该是红子，所以blackTurn为False。人先下，所以人为黑子，所以可以点击的是黑子，红子不可点击
@@ -1687,16 +1518,8 @@ void Chessboard::manAction() {
     this->undoButton->setDisabled(true);
     this->redoButton->setDisabled(true);
 
-    if (debugInfoShow.length() != 0)
-        debugInfoShow.clear();
-    if (legalInfoShow.length() != 0)
-        legalInfoShow.clear();
-    if (doShow)
-        doShow = false;
-    this->pathLabel->clear();
-
     //初始化一个棋盘上需要的Chess Label List
-    Checker_CheckerState::setEvaluateBlack(false);
+	Checker_CheckerState::setEvaluateBlack(false);
     this->initializeChessLabelList();
     //并显示该棋盘
     this->refreshChessBoard();
@@ -1704,7 +1527,7 @@ void Chessboard::manAction() {
 }
 
 //SLOTS
-void Chessboard::beginConsecutiveEating() {
+void Chessboard::beginConsecutiveEating(){
     consecutiveEating = true;
     this->beginConsecutiveEatingButton->setDisabled(true);
     this->repealConsecutiveEatingButton->setDisabled(false);
@@ -1778,7 +1601,7 @@ void Chessboard::undo()
             }
             this->redoStack_robot.push_back(this->historyStack_robot.back());
             this->historyStack_robot.pop_back();
-        }
+        }  
         if (!this->historyStack_human.empty()) {
 
 //            PiecePos human_begin = historyStack_human.back().first;
@@ -1921,8 +1744,7 @@ void Chessboard::redo()
 }
 
 //判断棋盘局面输赢
-void Chessboard::judge()
-{
+void Chessboard::judge(){
     //遍历chessLabelList，记录前端黑方、红方剩余棋子的个数
     int existedBlackUiPieceCounter = 0;
     int existedRedUiPieceCounter = 0;
@@ -1947,85 +1769,4 @@ void Chessboard::judge()
         this->setAllChessLabelDisabled();
         gameOver = true;
     }
-}
-
-//
-void Chessboard::writeText(QString str)
-{
-
-
-    str=QString::number(count)+"."+str;
-
-
-    QFile file(path);
-    //文件尾添加
-    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Append))
-
-    {
-
-        qDebug()<<"Can't open the file!"<<endl;
-
-    }
-    QTextStream out(&file);
-    out << str;
-    out << "\n";
-    file.close();
-    count++;
-}
-
-void Chessboard::writeNewText(QString newStr)
-{
-
-}
-
-
-// 创建打谱文件  返回文件路径
-/*输入：先手名称、后手名称
-返回：创建文件名
-*/
-void Chessboard::createText(QString first, QString second)
-{
-    QFile file(path);
-    //文件尾添加
-    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Truncate)) {
-
-        qDebug()<<"Can't open the file!"<<endl;
-
-    }
-    QTextStream out(&file);
-    QDateTime da_time;
-    QString time_str=da_time.currentDateTime().toString("yyyy-MM-dd");
-    out<<QObject::trUtf8("时间:") <<time_str<<"\n";
-    out<<QObject::trUtf8("先手:1") <<"\n";
-    out<<QObject::trUtf8("先手:") <<first<<"\n";
-    out<<QObject::trUtf8("后手:") <<second<<"\n";
-    out<<QObject::trUtf8("结果:")<< "\n";
-
-    file.close();
-}
-
-
-
-/*打谱TXT重命名 */
-void Chessboard::reNameForText(QString first, QString second, QString winner)
-{
-    //更改文件中结果行
-    //若上方棋子胜利，记录格式为“结果：1-0”；若下方棋子胜利，记 录格式为“结果：0-1”；若为平局，记录格式为“结果：*”。
-
-
-
-    //文件重命名
-    QFile file(path);
-    QDateTime da_time;
-    QString time_str=da_time.currentDateTime().toString("yyyy-MM-dd");
-    //文件名的格式为：“ DR8 - 先手参赛队A vs后手参赛队B - 先（后） 手胜 - 比赛时间地点 - 赛事名称”，文件的扩展名为 txt
-    QString newFileName="";
-    /*
-    "DR"+chessboardType+"-先手参赛队"+first+"vs后手参赛队"+second+"-"+winner+"-"+time_str+"安徽大学"
-            +"-2018年中国大学生计算机博弈大赛.txt";
-     */
-    //编码有问题
-    bool ok = file.rename(newFileName);
-    file.close();
-
 }

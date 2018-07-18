@@ -1377,7 +1377,7 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
     }
 
     for (int i = 0; i < oldPositionList.size();i++) {
-        if (oldPositionList[i] != newPositionList[i]) {
+        if (oldPositionList[i] != newPositionList[i]){
             QString beginPosition = "[" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + "]";
             int legalBeginPosition = oldPositionList[i].first * this->chessboardType / 2 + oldPositionList[i].second /2 + 1;
             QString legalBeginPositionString = QString::number(legalBeginPosition);
@@ -1397,6 +1397,7 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
                     && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
                 this->undoButton->setEnabled(true);
 
+<<<<<<< HEAD
             //显示棋谱（robot: red side)
             int begin_row = robot_begin.row;
             int begin_col = robot_begin.col;
@@ -1446,6 +1447,11 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
 //            QString legalTargetPositionString = QString::number(legalTargetPosition);
 //            infoShow = beginPosition + "-->" + targetPosition + "\t(" + legalBeginPositionString + "-->" + legalTargetPositionString + ")";
 
+=======
+            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
+            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
+            QString legalTargetPositionString = QString::number(legalTargetPosition);
+            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
            /*
             writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
                         count++;
@@ -1453,13 +1459,18 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
                             this->writeText(this->writcontent);
             }
             */
+>>>>>>> 3bd1a6882be42e93eb2ff7a8da2bde643874be9d
         }
-
     }
+    //显示在Label上
+
+
 
 }
 
-void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus) {//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
+
+
+void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus){//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
     std::vector<std::pair<int, int> > oldPositionList;
     std::vector<std::pair<int, int> > newPositionList;
 
@@ -1541,6 +1552,7 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
                     && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
                 this->undoButton->setEnabled(true);
 
+<<<<<<< HEAD
             //显示棋谱（robot: black side)
             int begin_row = robot_begin.row;
             int begin_col = robot_begin.col;
@@ -1590,6 +1602,11 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
 //            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
 //            QString legalTargetPositionString = QString::number(legalTargetPosition);
 //            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
+=======
+            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
+            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
+            QString legalTargetPositionString = QString::number(legalTargetPosition);
+            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
             //
             /*
             writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
@@ -1598,6 +1615,7 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
                 this->writeText(this->writcontent);
             }
             */
+>>>>>>> 3bd1a6882be42e93eb2ff7a8da2bde643874be9d
         }
     }
 
@@ -1668,7 +1686,7 @@ void Chessboard::robotAction(){
 }
 
 //SLOTS
-void Chessboard::manAction() {
+void Chessboard::manAction(){
 
     gameOver = false;
     //当人先下棋时,此时机器方应该是红子，所以blackTurn为False。人先下，所以人为黑子，所以可以点击的是黑子，红子不可点击
@@ -1704,7 +1722,7 @@ void Chessboard::manAction() {
 }
 
 //SLOTS
-void Chessboard::beginConsecutiveEating() {
+void Chessboard::beginConsecutiveEating(){
     consecutiveEating = true;
     this->beginConsecutiveEatingButton->setDisabled(true);
     this->repealConsecutiveEatingButton->setDisabled(false);
@@ -1921,8 +1939,7 @@ void Chessboard::redo()
 }
 
 //判断棋盘局面输赢
-void Chessboard::judge()
-{
+void Chessboard::judge(){
     //遍历chessLabelList，记录前端黑方、红方剩余棋子的个数
     int existedBlackUiPieceCounter = 0;
     int existedRedUiPieceCounter = 0;
@@ -1948,48 +1965,44 @@ void Chessboard::judge()
         gameOver = true;
     }
 }
-
 //
 void Chessboard::writeText(QString str)
 {
 
 
-    str=QString::number(count)+"."+str;
+ str=QString::number(count)+"."+str;
 
 
-    QFile file(path);
-    //文件尾添加
-    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Append))
+QFile file(path);
+//文件尾添加
+if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Append))
 
-    {
-
-        qDebug()<<"Can't open the file!"<<endl;
-
-    }
-    QTextStream out(&file);
-    out << str;
-    out << "\n";
-    file.close();
-    count++;
-}
-
-void Chessboard::writeNewText(QString newStr)
 {
 
+qDebug()<<"Can't open the file!"<<endl;
+
 }
+QTextStream out(&file);
+out << str;
+out << "\n";
+file.close();
+count++;
+}
+
 
 
 // 创建打谱文件  返回文件路径
 /*输入：先手名称、后手名称
 返回：创建文件名
 */
-void Chessboard::createText(QString first, QString second)
-{
+void Chessboard::createText(QString first, QString second) {
     QFile file(path);
     //文件尾添加
-    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Truncate)) {
+    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Truncate))
 
-        qDebug()<<"Can't open the file!"<<endl;
+    {
+
+    qDebug()<<"Can't open the file!"<<endl;
 
     }
     QTextStream out(&file);
@@ -2001,13 +2014,13 @@ void Chessboard::createText(QString first, QString second)
     out<<QObject::trUtf8("后手:") <<second<<"\n";
     out<<QObject::trUtf8("结果:")<< "\n";
 
-    file.close();
+     file.close();
 }
 
 
 
 /*打谱TXT重命名 */
-void Chessboard::reNameForText(QString first, QString second, QString winner)
+void Chessboard::reNameForText(QString first, QString second,QString winner)
 {
     //更改文件中结果行
     //若上方棋子胜利，记录格式为“结果：1-0”；若下方棋子胜利，记 录格式为“结果：0-1”；若为平局，记录格式为“结果：*”。
@@ -2027,5 +2040,6 @@ void Chessboard::reNameForText(QString first, QString second, QString winner)
     //编码有问题
     bool ok = file.rename(newFileName);
     file.close();
+
 
 }
