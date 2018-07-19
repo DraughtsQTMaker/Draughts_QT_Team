@@ -13,6 +13,7 @@ extern bool consecutiveEating;
 extern QString path;
 extern QString first;
 extern QString second;
+extern QString newFileTitle;
 
 extern bool gameOver;
 #endif // GLOBALVARIABLE_H

@@ -85,6 +85,9 @@ private:
     ChessStatus chessStatus;
     Checker_AlphaBetaSearch * robot;
 
+    QList<QString> game_result_lst;
+    QList<QString> game_result_lst_redo;
+
 
 
     //私有成员方法
@@ -145,27 +148,20 @@ public:
     int count=1;
 
 
-    // 回合完毕后，写入字符串
-    void  writeText(QString str);
-    //悔棋 ，更改最后一行记录，写入新字符串 newStr
-    void writeNewText(QString newStr);
-
+//    // 回合完毕后，写入字符串
+//    void  writeText(QString str);
 
     // 创建打谱文件  返回文件路径
     /*输入：先手名称、后手名称
                 返回：创建文件名*/
-    void createText(QString first, QString second);
+    void createText(QString first, QString second, QList<QString> game_res_lst);
 
      QString result="";
     /*打谱TXT重命名 */
-    void reNameForText();
+    void reNameForText(bool firstWin);
 
     //写入结果 例如 结果：1-0
     void writeResult(QString result);
-
-    void testTxt();
-    //删除文本最后一行
-    void delLastLine();
 
 
 

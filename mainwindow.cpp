@@ -14,10 +14,10 @@ MainWindow::MainWindow(QWidget* parent) :
     this->secondName= new QLabel("后手:", this->askDialog);
 
     this->firstEdit=new QLineEdit(this->askDialog);
-    this->firstEdit->setText("first side");
+    this->firstEdit->setText("F_S_1");
 
     this->secondEdit=new QLineEdit(this->askDialog);
-    this->secondEdit->setText("second side");
+    this->secondEdit->setText("S_S_1");
 
     this->labelTex = new QLabel("Please select the version:", this->askDialog);
 
