@@ -14,11 +14,12 @@ HEADERS += chessboard.h \
            BackEnd/Checker_CheckerState.h \
            BackEnd/DataStructure.h \
     mainwindow.h
-SOURCES += chessboard.cpp \
+SOURCES += \
            chesslabel.cpp \
            globalVariable.cpp \
            main.cpp \
            BackEnd/Checker_AlphaBetaSearch.cpp \
            BackEnd/Checker_CheckerState.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    chessboard.cpp
 RESOURCES += PieceImages.qrc
