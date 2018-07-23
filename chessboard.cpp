@@ -3,6 +3,11 @@
 
 extern QHash<QByteArray, QPair<double, int> > blackHashTable;
 
+QString debugInfoShow = "";
+QString legalInfoShow = "";
+bool doShow = false;
+
+
 //构造函数
 Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearch) :
     QLabel(parent)
@@ -10,7 +15,8 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->chessboardType = chessboardType;
     this->layerNumber = layerNumberOfSearch;
 
-    this->createText(first ,second );
+//    this->createText(first ,second );
+   // this->testTxt();
 
     //初始化chessLabelList
     this->initializeChessLabelList();
@@ -41,6 +47,15 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->repealConsecutiveEatingButton->resize(40,20);
     this->repealConsecutiveEatingButton->setText("Repeal Consecutive Eating");
 
+    this->undoButton = new QPushButton(this);
+    this->undoButton->resize(40, 20);
+    this->undoButton->setText("Undo");
+    this->undoButton->setDisabled(true);
+
+    this->redoButton = new QPushButton(this);
+    this->redoButton->resize(40, 20);
+    this->redoButton->setText("Redo");
+    this->redoButton->setDisabled(true);
 
     mainLayout->addWidget(this->robotFirstButton, this->chessboardType,0,1,this->chessboardType/2);
     mainLayout->addWidget(this->manFirstButton, this->chessboardType,this->chessboardType/2,1,this->chessboardType/2);
@@ -48,15 +63,21 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     mainLayout->addWidget(this->beginConsecutiveEatingButton,this->chessboardType+1,0,1,this->chessboardType/2);
     mainLayout->addWidget(this->repealConsecutiveEatingButton,this->chessboardType+1,this->chessboardType/2,1,this->chessboardType/2);
 
+    mainLayout->addWidget(this->undoButton, this->chessboardType+2, 0, 1, this->chessboardType/2);
+    mainLayout->addWidget(this->redoButton, this->chessboardType+2, this->chessboardType/2, 1, this->chessboardType/2);
+
     connect(this->robotFirstButton, SIGNAL(clicked()), this, SLOT(robotAction()));
     connect(this->manFirstButton, SIGNAL(clicked()), this,SLOT(manAction()));
 
     connect(this->beginConsecutiveEatingButton,SIGNAL(clicked()), this, SLOT(beginConsecutiveEating()));
     connect(this->repealConsecutiveEatingButton, SIGNAL(clicked()), this, SLOT(repealConsecutiveEating()));
 
+    connect(this->undoButton, SIGNAL(clicked()), this, SLOT(undo()));
+    connect(this->redoButton, SIGNAL(clicked()), this, SLOT(redo()));
+
     this->pathLabel = new QLabel();
     this->pathLabel->setStyleSheet("background-color:rgb(255,248,220)");
-    mainLayout->addWidget(this->pathLabel, this->chessboardType+2,0,1,this->chessboardType);
+    mainLayout->addWidget(this->pathLabel, this->chessboardType+3,0,1,this->chessboardType);
 
 }
 
@@ -82,12 +103,16 @@ void Chessboard::initializeChessLabelList(){
                 QString tempRow = QString::number(i);
                 QString tempCol = QString::number(j);
                 QString tempString = tempRow + "," + tempCol;
+
+                int tempLegal = i*10/2 + j/2 + 1;
+                QString tempLegalStr = QString::number(tempLegal);
+
                 //通过HTML语言来设置Label上字体的颜色
-                tempString = "<font color=blue>" + tempString +"</font>";
+                tempString = "<font color=blue>" + tempString + "\t(" + tempLegalStr + ")" +"</font>";
                 ChessLabel * currentLabel = this->chessLabelList[k++];
                 currentLabel->setText(tempString);
                 currentLabel->setMargin(0);
-                currentLabel->setFont(QFont("Timers" , 7 ,  QFont::Bold));
+                currentLabel->setFont(QFont("Timers" , 12 ,  QFont::Bold));
 
                 //
                 currentLabel->setAlignment(Qt::AlignBottom);
@@ -159,13 +184,17 @@ void Chessboard::initializeChessLabelList(){
                 QString tempRow = QString::number(i);
                 QString tempCol = QString::number(j);
                 QString tempString = tempRow + "," + tempCol;
+
+                int tempLegal = i*8/2 + j/2 + 1;
+                QString tempLegalStr = QString::number(tempLegal);
+
                 //通过HTML语言来设置Label上字体的颜色
-                tempString = "<font color=blue>" + tempString +"</font>";
+                tempString = "<font color=blue>" + tempString + "\t (" + tempLegalStr + ")" +"</font>";
                 ChessLabel * currentLabel = this->chessLabelList[k++];
 //                qDebug()<<k;
                 currentLabel->setText(tempString);
                 currentLabel->setMargin(0);
-                currentLabel->setFont(QFont("Timers" , 7 ,  QFont::Bold));
+                currentLabel->setFont(QFont("Timers" , 12 ,  QFont::Bold));
 
                 //设置对其方式
                 currentLabel->setAlignment(Qt::AlignBottom);
@@ -330,9 +359,9 @@ void Chessboard::setAllEmptyPositionEnabled(){
 //刷新棋盘
 void Chessboard::refreshChessBoard(){
     //遍历chessLabelList中的每一个标签
-    for(ChessLabel *currentChessLabel:this->chessLabelList){
+    for(ChessLabel *currentChessLabel:this->chessLabelList) {
         //只处理非Dormant的ChessLabel, Dormant的ChessLabel是不合法棋位
-        if(!currentChessLabel->isDormant()){
+        if(!currentChessLabel->isDormant()) {
 
 
 
@@ -351,18 +380,20 @@ void Chessboard::refreshChessBoard(){
            }
 
            //设置哪方棋子不可以点击：根据全局变量 redGuiPieceAvailable的值
-           if(!redGuiPieceAvailable){
+           if(!redGuiPieceAvailable) {
                 if(currentChessLabel->getChessType() == -1 || currentChessLabel->getChessType() == -2)
                     currentChessLabel->setDisabled(true);
-            }else{//红方棋子可点击，那就意味着黑方棋子不可点击
+           }
+           else {//红方棋子可点击，那就意味着黑方棋子不可点击
                 if(currentChessLabel->getChessType() == 1 || currentChessLabel->getChessType() == 2)
                     currentChessLabel->setDisabled(true);
-            }
+           }
 
 
 
 
-        }else{//不合法棋位都是不可以点击的
+        }
+        else{//不合法棋位都是不可以点击的
             currentChessLabel->setDisabled(true);
         }
 
@@ -724,8 +755,6 @@ void Chessboard::showPossiblePositionCanMoveTo(){
 }
 
 
-
-
 //普通子是否可以吃子
 bool Chessboard::canNormalPieceEatOpponent(int chessType, QPair<int,int> chessPosition){
     bool canEat = false;
@@ -794,8 +823,6 @@ bool Chessboard::canNormalPieceEatOpponent(int chessType, QPair<int,int> chessPo
 
 }
 
-
-
 void Chessboard::getCurrentChessStatusFromChessLabelList(){
 
     int walkToBottomCounter = 0;    //即：黑子计数器
@@ -816,9 +843,9 @@ void Chessboard::getCurrentChessStatusFromChessLabelList(){
     }
 
 
-    for(ChessLabel* currentLabel : this->chessLabelList){
+    for(ChessLabel* currentLabel : this->chessLabelList) {
        //判断当前ChessLabel是否休眠
-       if(!currentLabel->isDormant()){
+       if(!currentLabel->isDormant()) {
 
            //获得当前Label代表的棋子信息
            if(currentLabel->getChessType() == 1){//当为黑色棋子时，对应后台的上部棋子（即也是：后台的黑子）
@@ -831,7 +858,7 @@ void Chessboard::getCurrentChessStatusFromChessLabelList(){
 
 
 
-           }else if(currentLabel->getChessType() == 2){
+           }else if(currentLabel->getChessType() == 2){ //blackKing
 //               existed = true;
 //               isKing = true;
                rowNumber = currentLabel->getPosition().first;
@@ -840,7 +867,7 @@ void Chessboard::getCurrentChessStatusFromChessLabelList(){
                SingleChessPiece currentChessPiece(rowNumber,colNumber,isKing,chessColorIsBlack,existed);
                this->chessStatus.blackPieceList[walkToBottomCounter++] = currentChessPiece;
 
-           }else if(currentLabel->getChessType() == -1){
+           }else if(currentLabel->getChessType() == -1){ //red
 //               existed = true;
 //               isKing = false;
                rowNumber = currentLabel->getPosition().first;
@@ -848,7 +875,7 @@ void Chessboard::getCurrentChessStatusFromChessLabelList(){
 
                SingleChessPiece currentChessPiece(rowNumber,colNumber,!isKing,!chessColorIsBlack,existed);
                this->chessStatus.redPieceList[walkToTopCounter++] = currentChessPiece;
-           }else if(currentLabel->getChessType() == -2){
+           }else if(currentLabel->getChessType() == -2){ //redKing
 //               existed = true;
 //               isKing = true;
                rowNumber = currentLabel->getPosition().first;
@@ -866,31 +893,62 @@ void Chessboard::getCurrentChessStatusFromChessLabelList(){
 
 
     //把CheckerState中的List中空置的单元填充上
-    if(walkToBottomCounter <= 19){
-        for(int i = walkToBottomCounter; i<20;i++){
+    if (this->chessboardType == 8) { //8*8棋盘
+        if(walkToBottomCounter <= 11){
+            for(int i = walkToBottomCounter; i<12;i++){
 
-            existed = false;
-            isKing = false;
-            rowNumber = 0;
-            colNumber = 0;
-            SingleChessPiece currentChessPiece(rowNumber,colNumber,isKing,chessColorIsBlack,existed);
-            this->chessStatus.blackPieceList[i] = currentChessPiece;
+                existed = false;
+                isKing = false;
+                rowNumber = 0;
+                colNumber = 0;
+                SingleChessPiece currentChessPiece(rowNumber,colNumber,isKing,chessColorIsBlack,existed);
+                this->chessStatus.blackPieceList[i] = currentChessPiece;
+            }
         }
-    }
 
-    if(walkToTopCounter <= 19){
-        for(int i = walkToTopCounter; i<20;i++){
-//            chessColor = true;
-            existed = false;
-            isKing = false;
-            rowNumber = 0;
-            colNumber = 0;
-            SingleChessPiece currentChessPiece(rowNumber,colNumber,isKing,!chessColorIsBlack,existed);
-            this->chessStatus.redPieceList[i] = currentChessPiece;
+        if(walkToTopCounter <= 11){
+            for(int i = walkToTopCounter; i<12;i++){
+    //            chessColor = true;
+                existed = false;
+                isKing = false;
+                rowNumber = 0;
+                colNumber = 0;
+                SingleChessPiece currentChessPiece(rowNumber,colNumber,isKing,!chessColorIsBlack,existed);
+                this->chessStatus.redPieceList[i] = currentChessPiece;
+            }
         }
+        for(int i = 0;i < walkToTopCounter / 2;++i){
+            qSwap(chessStatus.redPieceList[i],chessStatus.redPieceList[11-i]);
+        }
+
     }
-    for(int i = 0;i < walkToTopCounter / 2;++i){
-        qSwap(chessStatus.redPieceList[i],chessStatus.redPieceList[19-i]);
+    else { //10*10棋盘
+        if(walkToBottomCounter <= 19){
+            for(int i = walkToBottomCounter; i<20;i++){
+
+                existed = false;
+                isKing = false;
+                rowNumber = 0;
+                colNumber = 0;
+                SingleChessPiece currentChessPiece(rowNumber,colNumber,isKing,chessColorIsBlack,existed);
+                this->chessStatus.blackPieceList[i] = currentChessPiece;
+            }
+        }
+
+        if(walkToTopCounter <= 19){
+            for(int i = walkToTopCounter; i<20;i++){
+    //            chessColor = true;
+                existed = false;
+                isKing = false;
+                rowNumber = 0;
+                colNumber = 0;
+                SingleChessPiece currentChessPiece(rowNumber,colNumber,isKing,!chessColorIsBlack,existed);
+                this->chessStatus.redPieceList[i] = currentChessPiece;
+            }
+        }
+        for(int i = 0;i < walkToTopCounter / 2;++i){
+            qSwap(chessStatus.redPieceList[i],chessStatus.redPieceList[19-i]);
+        }
     }
 
 
@@ -964,10 +1022,7 @@ void Chessboard::updateChessLabelListFromChessStatus(){
 }
 
 
-
-
-
-//Chessboard的鼠标事件
+//Chessboard的鼠标事件 (human action)
 void Chessboard::mouseReleaseEvent(QMouseEvent *){
     //首先判断全局变量clickedPositionList表的长度
     int length = clickedPositionList.size();
@@ -991,57 +1046,59 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
     }
 
 
-
     //实现移动棋子
     if(length>=2){//如果至少已经点击了两个不同的位置，则移动棋子，最后把该clickedPositionList清空
 
-        if(this->chessLabelList[clickedPositionList[0].first *(this->chessboardType)+ clickedPositionList[0].second]->getChessType() == 0)//如果第一次点击的是空棋位
-        {
-        }else{
+        if(this->chessLabelList[clickedPositionList[0].first *(this->chessboardType)+ clickedPositionList[0].second]->getChessType() == 0) {
+            //如果第一次点击的是空棋位
+            //do nothing
+        }
+        else {
 //            //获得点击的第一个位置的棋子类型，第一次点击的位置
 //            int tempType = this->chessLabelList[clickedPositionList[0].first *(this->chessboardType)+ clickedPositionList[0].second]->getChessType();
 //            QPair<int,int> tempPosition = clickedPositionList[0];
 
 
             //如果点击的第2个位置是空棋位，则修改棋盘，并刷新棋盘
-            if(this->chessLabelList[clickedPositionList[1].first *(this->chessboardType) + clickedPositionList[1].second]->getChessType()== 0){
+            if(this->chessLabelList[clickedPositionList[1].first *(this->chessboardType) + clickedPositionList[1].second]->getChessType()== 0) {
                 int p =clickedPositionList[0].first *(this->chessboardType) + clickedPositionList[0].second;
                 int theFirstType = this->chessLabelList[p]->getChessType();
 
 
 
-                qDebug()<< "人起子位置：("<<clickedPositionList[0].first <<",\t" << clickedPositionList[0].second <<")";
-                qDebug()<< "人落子位置：("<<clickedPositionList[1].first << ",\t" << clickedPositionList[1].second <<")";
+//                qDebug()<< "人起子位置：("<<clickedPositionList[0].first <<",\t" << clickedPositionList[0].second <<")";
+//                qDebug()<< "人落子位置：("<<clickedPositionList[1].first << ",\t" << clickedPositionList[1].second <<")";
 
                 //
+                /*
                 int legalBeginPosition = clickedPositionList[0].first * this->chessboardType / 2 + clickedPositionList[0].second  + 1;
                 QString legalBeginPositionString = QString::number(legalBeginPosition);
                 int legalTargetPosition = clickedPositionList[1].first * this->chessboardType / 2 + clickedPositionList[1].second + 1;
                 QString legalTargetPositionString = QString::number(legalTargetPosition);
-                writcontent=writcontent+legalBeginPositionString+"x"+legalTargetPositionString+"\t";
+                writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
                 count++;
                 if(count%2==0){
                     this->writeText(this->writcontent);
-                }
-
-
-
-
-
+                }*/
                 //吃子----------------------开始吃子--------------------------//
-                //如果第一次点击的是非王子
-
+                QList<PiecePos> eat_lst;
+                //如果第一次点击的是非王子（单吃）
                 if( theFirstType % 2 != 0){
 
-                        QPair<int,int> middlePosition;
-                        middlePosition.first =  (clickedPositionList[0].first + clickedPositionList[1].first)/2;
-                        middlePosition.second = (clickedPositionList[0].second + clickedPositionList[1].second)/2;
-                        //修改middlePosition位置的Label为空
+                    QPair<int,int> middlePosition;
+                    middlePosition.first =  (clickedPositionList[0].first + clickedPositionList[1].first)/2;
+                    middlePosition.second = (clickedPositionList[0].second + clickedPositionList[1].second)/2;
+                    //修改middlePosition位置的Label为空
+                    int middleType = this->chessLabelList[middlePosition.first*(this->chessboardType) + middlePosition.second]->getChessType();
 
+                    if (middleType != 0 && (middleType != theFirstType)) {
+                        PiecePos eatPos = PiecePos(middlePosition.first, middlePosition.second, middleType);
+                        eat_lst.push_back(eatPos);
                         this->chessLabelList[middlePosition.first*(this->chessboardType) + middlePosition.second]->setChessType(0);
+                    }
 
-
-                }else{//如果第一次点击的是王子，则直接修改与王子落子临近的那个位置
+                }
+                else {//如果第一次点击的是王子，则直接修改与王子落子临近的那个位置
 
                     QPair<int,int> beginPosition = clickedPositionList[0];
                     QPair<int,int> targetPosition = clickedPositionList[1];
@@ -1058,27 +1115,96 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                     tempPosition.first += unitVector.first;
                     tempPosition.second += unitVector.second;
 
-                    while(tempPosition != beginPosition){
-                       if(this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->getChessType() != 0){
-                           this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->setChessType(0);
-                           break;//吃掉一个子后就结束吃子
-                       }
+                    while(tempPosition != beginPosition) {
+                        int tempType = this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->getChessType();
+                        if(tempType != 0) {
 
-                       tempPosition.first += unitVector.first;
-                       tempPosition.second += unitVector.second;
+                            PiecePos eatPos = PiecePos(tempPosition.first, tempPosition.second, tempType);
+                            eat_lst.push_back(eatPos);
+
+                            this->chessLabelList[tempPosition.first*(this->chessboardType) + tempPosition.second]->setChessType(0);
+                            break;//吃掉一个子后就结束吃子
+                        }
+
+                        tempPosition.first += unitVector.first;
+                        tempPosition.second += unitVector.second;
 
                     }
+                }
+                //---------------------吃子结束----------------------------//
+
+                int type = this->chessLabelList[clickedPositionList[0].first *(this->chessboardType)+ clickedPositionList[0].second]->getChessType();
+                PiecePos human_begin = {clickedPositionList[0].first, clickedPositionList[0].second, type};
+                PiecePos human_end = {clickedPositionList[1].first, clickedPositionList[1].second};
+                StackElement elem = StackElement(QPair<PiecePos,PiecePos>(human_begin,human_end), eat_lst);
+//                this->historyStack_human.push_back(QPair<PiecePos,PiecePos>(human_begin, human_end));
+                this->historyStack_human.push_back(elem);
+
+                int begin_row = human_begin.row;
+                int begin_col = human_begin.col;
+                int end_row = human_end.row;
+                int end_col = human_end.col;
 
 
-                }//---------------------吃子结束----------------------------//
+                int legal_begin = begin_row*this->chessboardType/2 + begin_col/2 + 1;
+                int legal_end = end_row*this->chessboardType/2 + end_col/2 + 1;
+                QString legal_begin_str = legal_begin/10 == 0 ? "0"+QString::number(legal_begin)
+                                                              : QString::number(legal_begin);
+                QString legal_end_str = legal_end/10 == 0 ? "0"+QString::number(legal_end)
+                                                          : QString::number(legal_end);
 
 
-                //修改第一次点击的位置的棋位为空；设置第2个位置的棋子类型
+                // 显示棋谱(human)
+                if (debugInfoShow.length() == 0) { // the first side is human
+                    debugInfoShow = "\t human: \t";
+                    legalInfoShow = "\0";
+                }
+                else { // the first side is robot
+                    doShow = true;
+                    debugInfoShow.append("\t human: \t");
+                    legalInfoShow.append(" ");
+                }
+                debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
+                debugInfoShow.append("-->");
+                debugInfoShow.append("[" + QString::number(end_row) + "," + QString::number(end_col) + "]");
+
+                if (elem.eat_pos_lst.size() == 0) { //不吃子走步
+                    legalInfoShow.append(legal_begin_str + "-" + legal_end_str);
+                }
+                else { //吃子走步
+                    legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
+                }
+                if (doShow) {
+                    this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
+
+                    this->game_result_lst.push_back(legalInfoShow);
+
+                    debugInfoShow.clear();
+                    legalInfoShow.clear();
+                    doShow = false;
+                }
+
+
+                if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                        && !this->undoButton->isEnabled() && !consecutiveEating)
+                    this->undoButton->setEnabled(true);
+
+                if (!this->redoStack_human.empty())
+                    this->redoStack_human.clear();
+                if (!this->redoStack_robot.empty())
+                    this->redoStack_robot.clear();
+                if ((this->redoStack_human.empty() || this->redoStack_robot.empty())
+                        && this->redoButton->isEnabled() && !consecutiveEating)
+                    this->redoButton->setDisabled(true);
+
+                this->game_result_lst_redo.clear();
+
+
+                //修改第一次点击的位置的棋位为空；设置第2个位置的棋子类型 (do move)
                 //
                 this->chessLabelList[clickedPositionList[0].first *(this->chessboardType)+ clickedPositionList[0].second]->setChessType(0);
                 //
                 this->chessLabelList[clickedPositionList[1].first *(this->chessboardType)+ clickedPositionList[1].second]->setChessType(theFirstType);
-
 
 
 
@@ -1090,7 +1216,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                         else//如果在连续跳吃的情况下：其停留在了对方边界线上，并且在该位置并不可以继续吃对方子，那么其成王
                             if(!this->canNormalPieceEatOpponent(theFirstType,clickedPositionList[1]))
                                 this->chessLabelList[clickedPositionList[1].first *(this->chessboardType)+ clickedPositionList[1].second]->setChessType(2);
-                }else if(theFirstType == -1){
+                }else if(theFirstType == -1){//红方普通子
                     if(clickedPositionList[1].first == 0)
                         if(consecutiveEating == false)
                             this->chessLabelList[clickedPositionList[1].first *(this->chessboardType)+ clickedPositionList[1].second]->setChessType(-2);
@@ -1104,13 +1230,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
 
 
                 //移动完棋子之后，就可以把点击位置记录器清空了
-                 clickedPositionList.clear();
-
-
-
-
-
-
+                clickedPositionList.clear();
 
                 //Add Function:由于第一次点击棋子后，有一部分空棋位是Disabled，所以这里要把所有空棋位设置为enabled
                 //这可以通过ChessBoard::中的setAllEmptyPositionBeEnabled()
@@ -1122,7 +1242,7 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 this->judge();
 
                 //然后调用robot,来获得新的下棋结果
-                if(consecutiveEating == false){//如果当前手动走棋方不具备连续跳吃条件
+                if(consecutiveEating == false) {//如果当前手动走棋方不具备连续跳吃条件
 
                    //qDebug() <<"The opponent begin to move...";
                    //qDebug()<<"Before Move, the previous chessStatus is:";
@@ -1137,12 +1257,15 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                    //-------------------Robot下完棋后，再进行一次判断------------------------//
                    this->judge();
                 }
+                else {
+                    PiecePos end_pos = historyStack_robot.back().begin_end_pos.second;
+                    PiecePos begin_pos = end_pos;
+                    StackElement elem = StackElement(QPair<PiecePos,PiecePos>(begin_pos, end_pos));
+                    historyStack_robot.push_back(elem);
+                }
 
-
-
-
-
-            }else{//如果点击的第二个位置也是非空棋位，那么修改第一个点击位置作废，第二个位置当做第一个位置.并重新显示该最后点击棋子可以落子
+            }
+            else {//如果点击的第二个位置也是非空棋位，那么修改第一个点击位置作废，第二个位置当做第一个位置.并重新显示该最后点击棋子可以落子
                 //的位置
                 QPair<int,int> temp = clickedPositionList[1];
                 int type = this->chessLabelList[temp.first*(this->chessboardType)+temp.second]->getChessType();
@@ -1159,10 +1282,6 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
 
 }
 
-
-
-
-
 int Chessboard::robotPlay(){
     if(gameOver)
         return -1;
@@ -1170,6 +1289,7 @@ int Chessboard::robotPlay(){
 
     this->robot = new Checker_AlphaBetaSearch(this->layerNumber);
 
+    //get old status
     this->getCurrentChessStatusFromChessLabelList();
 //    //打印当前的chessStatus
 //    for(SingleChessPiece currentChessPiece : this->chessStatus.blackPieceList){
@@ -1208,60 +1328,172 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
     std::vector<std::pair<int, int> > oldPositionList;
     std::vector<std::pair<int, int> > newPositionList;
 
+    std::vector<ChessInfo> oldBlackInfos;
+    std::vector<ChessInfo> newBlackInfos;
 
-    for (SingleChessPiece tempBlackPiece : oldChessStatus.redPieceList){
-        if (tempBlackPiece.isExisted()){
-            int row = tempBlackPiece.getRow();
-            int col = tempBlackPiece.getCol();
+
+    for (SingleChessPiece tempRedPiece : oldChessStatus.redPieceList){
+        if (tempRedPiece.isExisted()){
+            int row = tempRedPiece.getRow();
+            int col = tempRedPiece.getCol();
             oldPositionList.push_back(std::make_pair(row, col));
         }
+
     }
 
 
-    for (SingleChessPiece tempBlackPiece : newChessStatus.redPieceList){
-        if (tempBlackPiece.isExisted()){
-            int row = tempBlackPiece.getRow();
-            int col = tempBlackPiece.getCol();
+    for (SingleChessPiece tempRedPiece : newChessStatus.redPieceList){
+        if (tempRedPiece.isExisted()){
+            int row = tempRedPiece.getRow();
+            int col = tempRedPiece.getCol();
             newPositionList.push_back(std::make_pair(row, col));
         }
+
+    }
+
+    for (SingleChessPiece tempBlackPiece : oldChessStatus.blackPieceList) {
+        int row = tempBlackPiece.getRow();
+        int col = tempBlackPiece.getCol();
+        QPair<int,int> _pos;
+        _pos.first = row;
+        _pos.second = col;
+        int chessType = tempBlackPiece.isKing() ? 2 : 1;
+        bool isExisted = tempBlackPiece.isExisted();
+        ChessInfo tempInfo = ChessInfo(_pos, chessType, isExisted);
+        oldBlackInfos.push_back(tempInfo);
+    }
+
+    for (SingleChessPiece tempBlackPiece : newChessStatus.blackPieceList) {
+        int row = tempBlackPiece.getRow();
+        int col = tempBlackPiece.getCol();
+        QPair<int,int> _pos;
+        _pos.first = row;
+        _pos.second = col;
+        int chessType = tempBlackPiece.isKing() ? 2 : 1;
+        bool isExisted = tempBlackPiece.isExisted();
+        ChessInfo tempInfo = ChessInfo(_pos, chessType, isExisted);
+        newBlackInfos.push_back(tempInfo);
     }
 
 
     //寻找两个list中的不同元素（结合棋盘特性，和ChessStatus的特性，只需要O（n)
-    for (int i = 0; i < oldPositionList.size();i++){
-        if (oldPositionList[i] != newPositionList[i]){
-            QString beginPosition = "(" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + ")";
-            int legalBeginPosition = oldPositionList[i].first * this->chessboardType / 2 + oldPositionList[i].second /2 + 1;
-            QString legalBeginPositionString = QString::number(legalBeginPosition);
+    //用于移动robot控制的红子
 
-            qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
-            qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
-
-            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
-            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
-            QString legalTargetPositionString = QString::number(legalTargetPosition);
-            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
-            writcontent=writcontent+legalBeginPositionString+"x"+legalTargetPositionString+"\t";
-            count++;
-            if(count%2==0){
-                this->writeText(this->writcontent);
-            }
-
+    QList<PiecePos> eat_lst;
+    //用于记录所吃黑子的位置信息
+    for (int i=0; i<oldBlackInfos.size(); ++i) {
+        if (oldBlackInfos[i].isExisted != newBlackInfos[i].isExisted) {
+//            qDebug() << "enter if block";
+            PiecePos ppos = PiecePos(oldBlackInfos[i].pos.first,
+                                     oldBlackInfos[i].pos.second,
+                                     oldBlackInfos[i].chessType);
+            eat_lst.push_back(ppos);
         }
     }
 
-    //显示在Label上
+    for (int i = 0; i < oldPositionList.size();i++) {
+        if (oldPositionList[i] != newPositionList[i]) {
+            QString beginPosition = "[" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + "]";
+            int legalBeginPosition = oldPositionList[i].first * this->chessboardType / 2 + oldPositionList[i].second /2 + 1;
+            QString legalBeginPositionString = QString::number(legalBeginPosition);
+
+//            qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
+//            qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
+
+            int type = this->chessLabelList[oldPositionList[i].first*this->chessboardType + oldPositionList[i].second]->getChessType();
+            PiecePos robot_begin = {oldPositionList[i].first, oldPositionList[i].second, type};
+            PiecePos robot_end = {newPositionList[i].first, newPositionList[i].second};
+
+            StackElement elem = StackElement(QPair<PiecePos,PiecePos>(robot_begin,robot_end), eat_lst);
+//            this->historyStack_robot.push_back(QPair<PiecePos,PiecePos>(robot_begin, robot_end));
+            this->historyStack_robot.push_back(elem);
+
+            if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                    && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
+                this->undoButton->setEnabled(true);
+
+            //显示棋谱（robot: red side)
+            int begin_row = robot_begin.row;
+            int begin_col = robot_begin.col;
+            int end_row = robot_end.row;
+            int end_col = robot_end.col;
+
+            int legal_begin = begin_row*this->chessboardType/2 + begin_col/2 + 1;
+            int legal_end = end_row*this->chessboardType/2 + end_col/2 + 1;
+            QString legal_begin_str = legal_begin/10 == 0 ? "0"+QString::number(legal_begin)
+                                                          : QString::number(legal_begin);
+            QString legal_end_str = legal_end/10 == 0 ? "0"+QString::number(legal_end)
+                                                      : QString::number(legal_end);
+
+            if (debugInfoShow.length() != 0) { // the first side is human
+                doShow = true;
+                debugInfoShow.append("\t robot:\t");
+                legalInfoShow.append(" ");
+
+            }
+            else { // the first side is robot(red)
+                debugInfoShow = "\t robot:\t";
+                legalInfoShow = "\0";
+            }
+            debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
+            debugInfoShow.append("-->");
+            debugInfoShow.append("[" + QString::number(end_row) + "," + QString::number(end_col) + "]");
 
 
+            if (elem.eat_pos_lst.size() == 0) { // 不吃子走步
+                legalInfoShow.append(legal_begin_str + "-" + legal_end_str);
+            }
+            else if (elem.eat_pos_lst.size() == 1) { // 吃子走步
+                legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
+            }
+            else { // 连跳走步
+                legalInfoShow.append(legal_begin_str + "x");
+                QList<PiecePos> mid_poses = this->getMiddleEatedPoses(robot_begin, robot_end, eat_lst);
+                for (int i=0; i<mid_poses.size(); ++i) {
+                    int mid_row = mid_poses[i].row;
+                    int mid_col = mid_poses[i].col;
+                    int mid_legal = mid_row*this->chessboardType/2 + mid_col/2 + 1;
+                    QString mid_legal_str = mid_legal/10 == 0 ? "0"+QString::number(mid_legal)
+                                                              : QString::number(mid_legal);
+                    legalInfoShow.append(mid_legal_str + "x");
+                }
+                legalInfoShow.append(legal_end_str);
+            }
+
+            if (doShow) {
+                this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
+
+                this->game_result_lst.push_back(legalInfoShow);
+
+                debugInfoShow.clear();
+                legalInfoShow.clear();
+                doShow = false;
+            }
+
+//            QString targetPosition = "[" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + "]";
+//            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
+//            QString legalTargetPositionString = QString::number(legalTargetPosition);
+//            infoShow = beginPosition + "-->" + targetPosition + "\t(" + legalBeginPositionString + "-->" + legalTargetPositionString + ")";
+
+           /*
+            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
+                        count++;
+                        if(count%2==0){
+                            this->writeText(this->writcontent);
+            }
+            */
+        }
+
+    }
 
 }
 
-
-
-void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus){//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
+void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus newChessStatus) {//有Bug,只能显示走子棋子的终止位置不同于初始位置的情况，待改进
     std::vector<std::pair<int, int> > oldPositionList;
     std::vector<std::pair<int, int> > newPositionList;
 
+    std::vector<ChessInfo> oldRedInfos;
+    std::vector<ChessInfo> newRedInfos;
 
     for (SingleChessPiece tempBlackPiece : oldChessStatus.blackPieceList){
         if (tempBlackPiece.isExisted()){
@@ -1280,8 +1512,44 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
         }
     }
 
+    for (SingleChessPiece tempRedPiece : oldChessStatus.redPieceList) {
+        int row = tempRedPiece.getRow();
+        int col = tempRedPiece.getCol();
+        QPair<int,int> _pos;
+        _pos.first = row;
+        _pos.second = col;
+        int chessType = tempRedPiece.isKing() ? -2 : -1;
+        bool isExisted = tempRedPiece.isExisted();
+        ChessInfo tempInfo = ChessInfo(_pos, chessType, isExisted);
+        oldRedInfos.push_back(tempInfo);
+    }
+
+    for (SingleChessPiece tempRedPiece : newChessStatus.redPieceList) {
+        int row = tempRedPiece.getRow();
+        int col = tempRedPiece.getCol();
+        QPair<int,int> _pos;
+        _pos.first = row;
+        _pos.second = col;
+        int chessType = tempRedPiece.isKing() ? -2 : -1;
+        bool isExisted = tempRedPiece.isExisted();
+        ChessInfo tempInfo = ChessInfo(_pos, chessType, isExisted);
+        newRedInfos.push_back(tempInfo);
+    }
 
     //寻找两个list中的不同元素（结合棋盘特性，和ChessStatus的特性，只需要O（n)
+    QList<PiecePos> eat_lst;
+
+    //用于记录所吃红子的位置信息
+    for (int i=0; i<oldRedInfos.size(); ++i) {
+        if (oldRedInfos[i].isExisted != newRedInfos[i].isExisted) {
+            PiecePos ppos = PiecePos(oldRedInfos[i].pos.first,
+                                     oldRedInfos[i].pos.second,
+                                     oldRedInfos[i].chessType);
+            eat_lst.push_back(ppos);
+        }
+    }
+
+
     for (int i = 0; i < oldPositionList.size();i++){
         if (oldPositionList[i] != newPositionList[i]){
             QString beginPosition = "(" + QString::number(oldPositionList[i].first) + "," + QString::number(oldPositionList[i].second)  + ")";
@@ -1291,16 +1559,88 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
             qDebug() << "Begin Position: (" << oldPositionList[i].first << " , " << oldPositionList[i].second << ")" << "  ----->  ";
             qDebug() << "Target Position: (" << newPositionList[i].first << " , " << newPositionList[i].second << ")" <<endl;
 
-            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
-            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
-            QString legalTargetPositionString = QString::number(legalTargetPosition);
-            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
+            int type = this->chessLabelList[oldPositionList[i].first*this->chessboardType + oldPositionList[i].second]->getChessType();
+            PiecePos robot_begin = {oldPositionList[i].first, oldPositionList[i].second, type};
+            PiecePos robot_end = {newPositionList[i].first, newPositionList[i].second};
+            StackElement elem = StackElement(QPair<PiecePos,PiecePos>(robot_begin,robot_end), eat_lst);
+//            this->historyStack_robot.push_back(QPair<PiecePos,PiecePos>(robot_begin, robot_end));
+            this->historyStack_robot.push_back(elem);
+
+            if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                    && this->historyStack_robot.size()!=1 && !this->undoButton->isEnabled())
+                this->undoButton->setEnabled(true);
+
+            //显示棋谱（robot: black side)
+            int begin_row = robot_begin.row;
+            int begin_col = robot_begin.col;
+            int end_row = robot_end.row;
+            int end_col = robot_end.col;
+
+            int legal_begin = begin_row*this->chessboardType/2 + begin_col/2 + 1;
+            int legal_end = end_row*this->chessboardType/2 + end_col/2 + 1;
+            QString legal_begin_str = legal_begin/10 == 0 ? "0"+QString::number(legal_begin)
+                                                          : QString::number(legal_begin);
+            QString legal_end_str = legal_end/10 == 0 ? "0"+QString::number(legal_end)
+                                                      : QString::number(legal_end);
+
+            if (debugInfoShow.length() != 0) { // the first side is human
+                doShow = true;
+                debugInfoShow.append("\t robot:\t");
+                legalInfoShow.append(" ");
+
+            }
+            else { // the first side is robot(black)
+                debugInfoShow = "\t robot:\t";
+                legalInfoShow = "\0";
+            }
+            debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
+            debugInfoShow.append("-->");
+            debugInfoShow.append("[" + QString::number(end_row) + "," + QString::number(end_col) + "]");
+
+
+            if (elem.eat_pos_lst.size() == 0) { // 不吃子走步
+                legalInfoShow.append(legal_begin_str + "-" + legal_end_str);
+            }
+            else if (elem.eat_pos_lst.size() == 1) { // 吃子走步
+                legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
+            }
+            else { // 连跳走步
+                legalInfoShow.append(legal_begin_str + "x");
+                QList<PiecePos> mid_poses = this->getMiddleEatedPoses(robot_begin, robot_end, eat_lst);
+                for (int i=0; i<mid_poses.size(); ++i) {
+                    int mid_row = mid_poses[i].row;
+                    int mid_col = mid_poses[i].col;
+                    int mid_legal = mid_row*this->chessboardType/2 + mid_col/2 + 1;
+                    QString mid_legal_str = mid_legal/10 == 0 ? "0"+QString::number(mid_legal)
+                                                              : QString::number(mid_legal);
+                    legalInfoShow.append(mid_legal_str + "x");
+                }
+                legalInfoShow.append(legal_end_str);
+            }
+
+            if (doShow) {
+                this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
+
+                this->game_result_lst.push_back(legalInfoShow);
+
+                debugInfoShow.clear();
+                legalInfoShow.clear();
+                doShow = false;
+            }
+
+
+//            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
+//            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
+//            QString legalTargetPositionString = QString::number(legalTargetPosition);
+//            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
             //
-            writcontent=writcontent+legalBeginPositionString+"x"+legalTargetPositionString+"\t";
+            /*
+            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
             count++;
             if(count%2==0){
                 this->writeText(this->writcontent);
             }
+            */
         }
     }
 
@@ -1323,6 +1663,28 @@ void Chessboard::robotAction(){
 
     //生成一个robot对象（此时，robot对象为黑棋）
     this->robot = new Checker_AlphaBetaSearch(this->layerNumber);
+
+    //clear stack
+    if (!this->historyStack_human.empty())
+        this->historyStack_human.clear();
+    if (!this->historyStack_robot.empty())
+        this->historyStack_robot.clear();
+    if (!this->redoStack_human.empty())
+        this->redoStack_human.clear();
+    if (!this->redoStack_robot.empty())
+        this->redoStack_robot.clear();
+    this->undoButton->setDisabled(true);
+    this->redoButton->setDisabled(true);
+
+    if (debugInfoShow.length() != 0)
+        debugInfoShow.clear();
+    if (legalInfoShow.length() != 0)
+        legalInfoShow.clear();
+    if (doShow)
+        doShow = false;
+    this->pathLabel->clear();
+    this->game_result_lst.clear();
+    this->game_result_lst_redo.clear();
 
     //根据chessLabelList生成ChessStatus对象
     this->getCurrentChessStatusFromChessLabelList();
@@ -1351,15 +1713,37 @@ void Chessboard::robotAction(){
 }
 
 //SLOTS
-void Chessboard::manAction(){
+void Chessboard::manAction() {
 
     gameOver = false;
     //当人先下棋时,此时机器方应该是红子，所以blackTurn为False。人先下，所以人为黑子，所以可以点击的是黑子，红子不可点击
     blackTurn = false;
     redGuiPieceAvailable = false;
 
+    //clear stack
+    if (!this->historyStack_human.empty())
+        this->historyStack_human.clear();
+    if (!this->historyStack_robot.empty())
+        this->historyStack_robot.clear();
+    if (!this->redoStack_human.empty())
+        this->redoStack_human.clear();
+    if (!this->redoStack_robot.empty())
+        this->redoStack_robot.clear();
+    this->undoButton->setDisabled(true);
+    this->redoButton->setDisabled(true);
+
+    if (debugInfoShow.length() != 0)
+        debugInfoShow.clear();
+    if (legalInfoShow.length() != 0)
+        legalInfoShow.clear();
+    if (doShow)
+        doShow = false;
+    this->pathLabel->clear();
+    this->game_result_lst.clear();
+    this->game_result_lst_redo.clear();
+
     //初始化一个棋盘上需要的Chess Label List
-	Checker_CheckerState::setEvaluateBlack(false);
+    Checker_CheckerState::setEvaluateBlack(false);
     this->initializeChessLabelList();
     //并显示该棋盘
     this->refreshChessBoard();
@@ -1367,10 +1751,14 @@ void Chessboard::manAction(){
 }
 
 //SLOTS
-void Chessboard::beginConsecutiveEating(){
+void Chessboard::beginConsecutiveEating() {
     consecutiveEating = true;
     this->beginConsecutiveEatingButton->setDisabled(true);
     this->repealConsecutiveEatingButton->setDisabled(false);
+
+    //在没有结束连吃时，暂时禁止undo & redo操作
+    this->undoButton->setDisabled(true);
+    this->redoButton->setDisabled(true);
 }
 
 //SLOTS
@@ -1379,6 +1767,9 @@ void Chessboard::repealConsecutiveEating(){
     if(consecutiveEating == true){
         //一旦撤销了连续跳吃，那么就应该把控制权返回给Robot
         consecutiveEating = false;
+
+        //由于连吃，在historyStack_robot栈中多加了一个元素，要弹出
+        this->historyStack_robot.pop_back();
 
         //------------------在机器方开始下之前，先判断当前手动下棋方是否取胜---------------//
         this->judge();
@@ -1391,13 +1782,206 @@ void Chessboard::repealConsecutiveEating(){
 
         this->beginConsecutiveEatingButton->setDisabled(false);
         this->repealConsecutiveEatingButton->setDisabled(true);
+
+        //结束连吃，恢复undo & redo操作
+        if (!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+            this->undoButton->setEnabled(true);
+        if (!(this->redoStack_human.empty() || this->redoStack_robot.empty()))
+            this->redoButton->setEnabled(true);
+
     }
 }
 
+//SLOTS
+void Chessboard::undo()
+{
+    if (!this->historyStack_human.empty() || !this->historyStack_robot.empty()
+            || !this->redoStack_human.empty() || !this->redoStack_robot.empty()) {
 
+        qDebug() << "undoing ------------";
+
+        if (!this->historyStack_robot.empty()) {
+
+//            PiecePos robot_begin = historyStack_robot.back().first;
+//            PiecePos robot_end = historyStack_robot.back().second;
+            PiecePos robot_begin = historyStack_robot.back().begin_end_pos.first;
+            PiecePos robot_end = historyStack_robot.back().begin_end_pos.second;
+
+//            int p = robot_end.x*(this->chessboardType) + robot_end.y;
+//            int theFirstType = this->chessLabelList[p]->getChessType();
+
+            int theFirstType = robot_begin.chessType;
+
+            //修改行棋目标位置的棋位为空；设置行棋原始位置的棋子类型
+            //
+            this->chessLabelList[robot_end.row*(this->chessboardType) + robot_end.col]->setChessType(0);
+            //
+            this->chessLabelList[robot_begin.row*(this->chessboardType) + robot_begin.col]->setChessType(theFirstType);
+            //恢复已吃棋子(robot)
+            QList<PiecePos> eatList = historyStack_robot.back().eat_pos_lst;
+            for (int i=0; i<eatList.size(); ++i) {
+                PiecePos eatPos = eatList[i];
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(eatPos.chessType);
+            }
+            this->redoStack_robot.push_back(this->historyStack_robot.back());
+            this->historyStack_robot.pop_back();
+        }
+        if (!this->historyStack_human.empty()) {
+
+//            PiecePos human_begin = historyStack_human.back().first;
+//            PiecePos human_end = historyStack_human.back().second;
+            PiecePos human_begin = historyStack_human.back().begin_end_pos.first;
+            PiecePos human_end = historyStack_human.back().begin_end_pos.second;
+
+//            int p = human_end.row*(this->chessboardType) + human_end.col;
+//            int theFirstType = this->chessLabelList[p]->getChessType();
+
+            int theFirstType = human_begin.chessType;
+
+            //修改行棋目标位置的棋位为空；设置行棋原始位置的棋子类型
+            //
+            this->chessLabelList[human_end.row*(this->chessboardType) + human_end.col]->setChessType(0);
+            //
+            this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->setChessType(theFirstType);
+            //该位置肯定为可点击
+            if (!this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->isEnabled())
+                this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->setEnabled(true);
+
+            //恢复已吃棋子(human)
+            QList<PiecePos> eatList = historyStack_human.back().eat_pos_lst;
+            for (int i=0; i<eatList.size(); ++i) {
+                PiecePos eatPos = eatList[i];
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(eatPos.chessType);
+            }
+
+            this->redoStack_human.push_back(this->historyStack_human.back());
+            this->historyStack_human.pop_back();
+        }
+
+
+        if (this->historyStack_human.empty() || this->historyStack_human.empty()) {
+            this->undoButton->setDisabled(true);
+        }
+
+        if ((!this->redoStack_human.empty() || !this->redoStack_robot.empty())
+                && !this->redoButton->isEnabled()) {
+
+            this->redoButton->setEnabled(true);
+        }
+
+        if (this->game_result_lst.size() != 0) {
+            this->game_result_lst_redo.push_back(this->game_result_lst.back());
+            this->game_result_lst.pop_back();
+        }
+
+        //刷新棋盘
+        this->refreshChessBoard();
+
+    }
+
+}
+
+//SLOTS
+void Chessboard::redo()
+{
+    if (!this->historyStack_human.empty() || !this->historyStack_robot.empty()
+            || !this->redoStack_human.empty() || !this->redoStack_robot.empty()) {
+        qDebug() << "redoing -----------";
+
+
+        if (!this->redoStack_human.empty()) {
+
+//            PiecePos human_begin = redoStack_human.back().first;
+//            PiecePos human_end = redoStack_human.back().second;
+            PiecePos human_begin = redoStack_human.back().begin_end_pos.first;
+            PiecePos human_end = redoStack_human.back().begin_end_pos.second;
+
+            int p = human_begin.row*(this->chessboardType) + human_begin.col;
+            int theFirstType = this->chessLabelList[p]->getChessType();
+
+            // 当出现王棋时(human)
+            int _row = human_end.row;
+            if ((theFirstType == -1) && (_row == 0))
+                theFirstType -= 1;
+            if ((theFirstType == 1) && (_row == this->chessboardType-1))
+                theFirstType += 1;
+
+
+            //修改行棋原始位置的棋位为空；设置行棋目标位置的棋子类型
+            //
+            this->chessLabelList[human_begin.row*(this->chessboardType) + human_begin.col]->setChessType(0);
+            //
+            this->chessLabelList[human_end.row*(this->chessboardType) + human_end.col]->setChessType(theFirstType);
+            //撤销已经恢复的被吃棋子(human)
+            QList<PiecePos> eatList = redoStack_human.back().eat_pos_lst;
+            for (int i=0; i<eatList.size(); ++i) {
+                PiecePos eatPos = eatList[i];
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(0);
+            }
+
+            this->historyStack_human.push_back(this->redoStack_human.back());
+            this->redoStack_human.pop_back();
+        }
+        if (!this->redoStack_robot.empty()) {
+
+//            PiecePos robot_begin = redoStack_robot.back().first;
+//            PiecePos robot_end = redoStack_robot.back().second;
+            PiecePos robot_begin = redoStack_robot.back().begin_end_pos.first;
+            PiecePos robot_end = redoStack_robot.back().begin_end_pos.second;
+
+            int p = robot_begin.row*(this->chessboardType) + robot_begin.col;
+            int theFirstType = this->chessLabelList[p]->getChessType();
+
+            // 当出现王棋时(robot)
+            int _row = robot_end.row;
+            if ((theFirstType == -1) && (_row == 0))
+                theFirstType -= 1;
+            if ((theFirstType == 1) && (_row == this->chessboardType-1))
+                theFirstType += 1;
+
+            //修改行棋原始位置的棋位为空；设置行棋目标位置的棋子类型
+            //
+            this->chessLabelList[robot_begin.row*(this->chessboardType) + robot_begin.col]->setChessType(0);
+            //
+            this->chessLabelList[robot_end.row*(this->chessboardType) + robot_end.col]->setChessType(theFirstType);
+            //撤销已经恢复的被吃棋子(robot)
+            QList<PiecePos> eatList = redoStack_robot.back().eat_pos_lst;
+            for (int i=0; i<eatList.size(); ++i) {
+                PiecePos eatPos = eatList[i];
+                this->chessLabelList[eatPos.row*(this->chessboardType)+eatPos.col]->setChessType(0);
+            }
+
+            this->historyStack_robot.push_back(this->redoStack_robot.back());
+            this->redoStack_robot.pop_back();
+        }
+
+        if (this->redoStack_human.empty() || this->redoStack_human.empty()) {
+            this->redoButton->setDisabled(true);
+        }
+
+        if ((!this->historyStack_human.empty() || !this->historyStack_robot.empty())
+                && !this->undoButton->isEnabled()) {
+
+            this->undoButton->setEnabled(true);
+        }
+
+        if (this->game_result_lst_redo.size() != 0) {
+            this->game_result_lst.push_back(this->game_result_lst_redo.back());
+            this->game_result_lst_redo.pop_back();
+        }
+
+        //刷新棋盘
+        this->refreshChessBoard();
+
+    }
+
+}
 
 //判断棋盘局面输赢
-void Chessboard::judge(){
+void Chessboard::judge()
+{
+    bool firstWin = false;
+
     //遍历chessLabelList，记录前端黑方、红方剩余棋子的个数
     int existedBlackUiPieceCounter = 0;
     int existedRedUiPieceCounter = 0;
@@ -1410,110 +1994,223 @@ void Chessboard::judge(){
     }
 
     if(existedBlackUiPieceCounter == 0){
-       QMessageBox::about(this,tr("Find Winner!"),tr("Red Win!!!"));
-       //设置所有chessLabel为Disabled
-       this->setAllChessLabelDisabled();
-       gameOver = true;
+        QMessageBox::about(this,tr("Find Winner!"),tr("Red Win!!!"));
+        //设置所有chessLabel为Disabled
+        this->setAllChessLabelDisabled();
+
+        if (!blackTurn) {
+            this->game_result_lst.push_front("结果：0-1\n");
+            this->game_result_lst.push_back("0-1");
+        }
+
+        else {
+            this->game_result_lst.push_front("结果：1-0\n");
+            this->game_result_lst.push_back("1-0");
+            firstWin = true;
+        }
+
+        gameOver = true;
     }
 
     if(existedRedUiPieceCounter == 0){
         QMessageBox::about(this,tr("Find Winner!"),tr("Black Win!!!"));
         //设置所有chessLabel为Disabled
         this->setAllChessLabelDisabled();
+
+        if (blackTurn) {
+            this->game_result_lst.push_front("结果：1-0\n");
+            this->game_result_lst.push_back("1-0");
+            firstWin = true;
+        }
+        else {
+            this->game_result_lst.push_front("结果：0-1\n");
+            this->game_result_lst.push_back("0-1");
+        }
+
+
         gameOver = true;
     }
-}
 
-void Chessboard::writeText(QString str)
-{
-
-
- str=QString::number(count/2)+"."+str;
-
-
-QFile file(path);
-//文件尾添加
-if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Append))
-
-{
-
-qDebug()<<"Can't open the file!"<<endl;
+    if (gameOver) {
+        this->createText(first, second, this->game_result_lst);
+        this->reNameForText(firstWin);
+    }
 
 }
-QTextStream out(&file);
-out << str;
-out << "\n";
-file.close();
-}
-
 
 
 // 创建打谱文件  返回文件路径
 /*输入：先手名称、后手名称
 返回：创建文件名
 */
-void Chessboard::createText(QString first, QString second) {
+void Chessboard::createText(QString first, QString second, QList<QString> game_res_lst)
+{
     QFile file(path);
     //文件尾添加
-    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Truncate))
+    if(!file.open(QIODevice::WriteOnly  | QIODevice::Text|QIODevice::Truncate)) {
 
-    {
-
-    qDebug()<<"Can't open the file!"<<endl;
+        qDebug()<<"Can't open the file!"<<endl;
 
     }
     QTextStream out(&file);
     QDateTime da_time;
     QString time_str=da_time.currentDateTime().toString("yyyy-MM-dd");
-    out<<QObject::trUtf8("时间:") <<time_str<<"\n";
-    out<<QObject::trUtf8("先手:1") <<"\n";
-    out<<QObject::trUtf8("先手:") <<first<<"\n";
-    out<<QObject::trUtf8("后手:") <<second<<"\n";
-    out<<QObject::trUtf8("结果:")<< "\n";
 
-     file.close();
+    out<< QString("时间:") <<time_str<<"\n";
+
+    QString first_side_str = blackTurn ? "1" : "2";
+
+    out << QString("先手：") << first_side_str <<"\n";
+    out << QString("先手方：") <<first<<"\n";
+    out << QString("后手方：") <<second<<"\n";
+
+    for (int i=0; i<game_res_lst.size()-1; ++i) {
+        if (i == 0)
+//            out<< codec->toUnicode(game_res_lst[i]) << "\n";
+            out<< game_res_lst[i] << "\n";
+        else
+//            out<< codec->toUnicode(QString::number(i) + "." + game_res_lst[i]) << "\n";
+            out<< QString::number(i) << ". " << game_res_lst[i] << "\n";
+    }
+    out << game_res_lst[game_res_lst.size()-1];
+
+    file.close();
 }
 
 
 
-/*打谱TXT重命名 */
-void Chessboard::reNameForText(QString first, QString second,QString winner)
+/*打谱TXT重命名 result格式 1-0 0-1*/
+void Chessboard::reNameForText(bool firstWin)
 {
     //更改文件中结果行
     //若上方棋子胜利，记录格式为“结果：1-0”；若下方棋子胜利，记 录格式为“结果：0-1”；若为平局，记录格式为“结果：*”。
-
-
+    QString winner ;
+    if (firstWin) {
+        winner.append(QString("先手胜"));
+    }
+    else {
+        winner.append(QString("后手胜"));
+    }
 
     //文件重命名
     QFile file(path);
     QDateTime da_time;
     QString time_str=da_time.currentDateTime().toString("yyyy-MM-dd");
+
     //文件名的格式为：“ DR8 - 先手参赛队A vs后手参赛队B - 先（后） 手胜 - 比赛时间地点 - 赛事名称”，文件的扩展名为 txt
-    QString newFileName="";
-    /*
-    "DR"+chessboardType+"-先手参赛队"+first+"vs后手参赛队"+second+"-"+winner+"-"+time_str+"安徽大学"
-            +"-2018年中国大学生计算机博弈大赛.txt";
-     */
-    //编码有问题
-    bool ok = file.rename(newFileName);
+    QString type=QString::number(chessboardType);
+    QString newFileName= newFileTitle + type ;
+//    QString newFileName="./DR"+type ;
+    newFileName.append(QString("-先手参赛队"));
+    newFileName=newFileName+first;
+    newFileName.append(QString("vs后手参赛队"));
+    newFileName=newFileName+second.append("-").append(winner).append("-").append(time_str);
+    newFileName.append(QString("安徽大学-2018年中国大学生计算机博弈大赛.txt"));
+
+    //QString newFileName="F:/c++/code/DR.txt";
+
+    //this->writeText(newFileName);
+
+    file.rename(path,newFileName);
     file.close();
+}
+
+/* 写入结果 例如 结果：1-0*/
+void Chessboard::writeResult(QString result){
+    //第五行 加入result
+    QStringList station_info;
+    QFile file(path);
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug()<<"Can't open the file!"<<endl;
+    }
+    QTextStream in(&file);
+    QString line;
+    while(!in.atEnd()){
+        line = in.readLine();//读取一行,还有读取所有readAll()
+        station_info<<line;
+    }
+    file.close();
+
+    QFile fileout(path);
+    if(!fileout.open(QIODevice::WriteOnly | QIODevice::Text|QIODevice::Truncate))
+    {
+        qDebug() << "Open failed";
+    }
+    QTextStream out(&fileout);
+    for(int i = 0; i != (station_info.size());i++){
+        if(i!=4){
+
+            out<< station_info.at(i) << "\n";
+        }else{
+            out<<station_info.at(i);
+            out<<result << "\n";
+        }
+
+    }
+}
+
+QList<PiecePos> Chessboard::getMiddleEatedPoses(PiecePos begin_pos, PiecePos end_pos, QList<PiecePos> eat_lst)
+{
+    int type = begin_pos.chessType;
+    QList<PiecePos> mid_poses;
+
+    if (type % 2 != 0) { //not king
+        bool* visited = new bool[eat_lst.size()];
+        if (searchPathByEatedPoses4NonKing(begin_pos, end_pos, mid_poses, eat_lst, visited)) {
+            mid_poses.pop_back();
+            delete[] visited;
+            return mid_poses;
+        }
+
+    }
+    else { //is king
+
+    }
+}
+
+bool Chessboard::searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_pos, QList<PiecePos> &midPoses,
+                                                QList<PiecePos> eat_lst, bool visited[])
+{
+    if ((curPos.row == end_pos.row) && (curPos.col == end_pos.col))
+        return true;
+
+    for (int i=0; i<eat_lst.size(); ++i) {
+        if (!visited[i]) {
+            int eat_row = eat_lst[i].row;
+            int eat_col = eat_lst[i].col;
+            int offset_row = eat_row - curPos.row;
+            int offset_col = eat_col - curPos.col;
+            if (std::abs(offset_row) == 1 && std::abs(offset_col) == 1) {
+
+                int mid_row = eat_row + offset_row;
+                int mid_col = eat_col + offset_col;
+
+                if ((mid_row >= 0 && mid_row < this->chessboardType) &&
+                        (mid_col >=0 && mid_col < this->chessboardType)) {
+                    visited[i] = true;
+                    PiecePos mid_Pos = PiecePos(mid_row, mid_col);
+                    midPoses.push_back(mid_Pos);
+
+                    if (searchPathByEatedPoses4NonKing(mid_Pos, end_pos, midPoses, eat_lst, visited))
+                        return true;
+
+                    visited[i] = false;
+                    midPoses.pop_back();
+
+                }
+
+            }
+
+        }
+    }
+
+    return false;
 
 
 }
 
+bool Chessboard::searchPathByEatedPoses4King(PiecePos curPos, PiecePos end_pos, QList<PiecePos> &midPoses,
+                                             QList<PiecePos> eat_lst, bool visited[])
+{
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
