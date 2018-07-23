@@ -66,15 +66,10 @@ private:
     QPushButton* undoButton; //开始悔棋
     QPushButton* redoButton; //撤销悔棋
 
-//    QList<QPair<PiecePos, PiecePos>> historyStack_human; //栈结构，记录行棋始末位置，用于悔棋(human)
-//    QList<QPair<PiecePos, PiecePos>> redoStack_human; //栈结构，记录悔棋始末位置，用于撤销悔棋(human)
-//    QList<QPair<PiecePos, PiecePos>> historyStack_robot; //栈结构，记录行棋始末位置，用于悔棋(robot)
-//    QList<QPair<PiecePos, PiecePos>> redoStack_robot; //栈结构，记录悔棋始末位置，用于撤销悔棋(robot)
-
-    QList<StackElement> historyStack_human;
-    QList<StackElement> redoStack_human;
-    QList<StackElement> historyStack_robot;
-    QList<StackElement> redoStack_robot;
+    QList<StackElement> historyStack_human; //栈结构，记录行棋始末位置，用于悔棋(human)
+    QList<StackElement> redoStack_human; //栈结构，记录悔棋始末位置，用于撤销悔棋(human)
+    QList<StackElement> historyStack_robot; //栈结构，记录行棋始末位置，用于悔棋(robot)
+    QList<StackElement> redoStack_robot; //栈结构，记录悔棋始末位置，用于撤销悔棋(robot)
 
     QLabel * pathLabel;
 
@@ -128,10 +123,18 @@ private:
     void judge();
 
     QList<PiecePos> getMiddleEatedPoses(PiecePos begin_pos, PiecePos end_pos, QList<PiecePos> eat_lst);
+
+    // function for non-king
     bool searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_pos, QList<PiecePos>& midPoses,
                                         QList<PiecePos> eat_lst, bool visited[]);
-    bool searchPathByEatedPoses4King(PiecePos curPos, PiecePos end_pos, QList<PiecePos>& midPoses,
-                                     QList<PiecePos> eat_lst, bool visited[]);
+
+    // function for king
+    QList<PiecePos> find_road(PiecePos ppos, int dir_row, int dir_col);
+    QList<PiecePos> find_intersections(const QList<PiecePos>& lst1, const QList<PiecePos>& lst2);
+    QList<PiecePos> getCandidatePoses(const PiecePos& begin_pos, const PiecePos& end_pos, const QList<PiecePos>& eat_lst);
+    bool searchPathByEatedPoses4King(PiecePos curPos, const PiecePos& end_pos, QList<PiecePos>& midPoses,
+                                     const QList<PiecePos>& eat_lst, const QList<PiecePos> candi_poses,
+                                     bool visited[]);
 
 public:
 

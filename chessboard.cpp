@@ -2154,18 +2154,28 @@ QList<PiecePos> Chessboard::getMiddleEatedPoses(PiecePos begin_pos, PiecePos end
     int type = begin_pos.chessType;
     QList<PiecePos> mid_poses;
 
+    bool* visited = new bool[eat_lst.size()];
+    for (int i=0; i<eat_lst.size(); ++i)
+        visited[i] = false;
+
     if (type % 2 != 0) { //not king
-        bool* visited = new bool[eat_lst.size()];
         if (searchPathByEatedPoses4NonKing(begin_pos, end_pos, mid_poses, eat_lst, visited)) {
             mid_poses.pop_back();
-            delete[] visited;
-            return mid_poses;
+            if (visited)
+                delete[] visited;
         }
-
     }
     else { //is king
-
+        QList<PiecePos> candi_poses = this->getCandidatePoses(begin_pos, end_pos, eat_lst);
+        if (searchPathByEatedPoses4King(begin_pos, end_pos, mid_poses, eat_lst, candi_poses, visited)) {
+            mid_poses.pop_back();
+            if (visited)
+                delete[] visited;
+        }
     }
+
+    return mid_poses;
+
 }
 
 bool Chessboard::searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_pos, QList<PiecePos> &midPoses,
@@ -2186,7 +2196,8 @@ bool Chessboard::searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_po
                 int mid_col = eat_col + offset_col;
 
                 if ((mid_row >= 0 && mid_row < this->chessboardType) &&
-                        (mid_col >=0 && mid_col < this->chessboardType)) {
+                        (mid_col >=0 && mid_col < this->chessboardType) &&
+                        this->chessLabelList[mid_row*this->chessboardType + mid_col]->getChessType() == 0) {
                     visited[i] = true;
                     PiecePos mid_Pos = PiecePos(mid_row, mid_col);
                     midPoses.push_back(mid_Pos);
@@ -2205,12 +2216,148 @@ bool Chessboard::searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_po
     }
 
     return false;
-
-
 }
 
-bool Chessboard::searchPathByEatedPoses4King(PiecePos curPos, PiecePos end_pos, QList<PiecePos> &midPoses,
-                                             QList<PiecePos> eat_lst, bool visited[])
+QList<PiecePos> Chessboard::find_road(PiecePos ppos, int dir_row, int dir_col)
 {
+    QList<PiecePos> poses_in_road;
 
+    PiecePos neighbor = PiecePos(ppos.row+dir_row, ppos.col+dir_col);
+    for (int i=0; i<this->chessboardType; ++i) {
+        if ((neighbor.row >= 0 && neighbor.row < this->chessboardType) &&
+            (neighbor.col >= 0 && neighbor.col < this->chessboardType) &&
+            (this->chessLabelList[neighbor.row*this->chessboardType + neighbor.col]->getChessType() == 0)) {
+            poses_in_road.push_back(neighbor);
+        }
+        else
+            break;
+
+        neighbor.row += dir_row;
+        neighbor.col += dir_col;
+    }
+
+    return poses_in_road;
+}
+
+QList<PiecePos> Chessboard::find_intersections(const QList<PiecePos>& lst1, const QList<PiecePos>& lst2)
+{
+    QList<PiecePos> inters;
+    for (int i=0; i<lst1.size(); ++i) {
+        for (int j=0; j<lst2.size(); ++j) {
+            if ((lst1.at(i).row == lst2.at(j).row) &&
+                (lst1.at(i).col == lst2.at(j).col))
+                inters.push_back(lst1.at(i));
+        }
+    }
+
+    return inters;
+}
+
+QList<PiecePos> Chessboard::getCandidatePoses(const PiecePos& begin_pos, const PiecePos& end_pos,
+                                              const QList<PiecePos>& eat_lst)
+{
+    QList<PiecePos> candi_poses;
+
+    QList<PiecePos> dir4_roads_poses;
+
+    QList<QList<PiecePos>> all_roads;
+
+    for (int i=0; i<eat_lst.size(); ++i) {
+
+        // 4 directions
+        for (int dir_row = -1; dir_row <= 1; dir_row += 2) {
+            for (int dir_col = -1; dir_col <= 1; dir_col += 2) {
+                QList<PiecePos> dir_road_poses = this->find_road(eat_lst[i], dir_row, dir_col);
+
+                for (int j=0; j<dir_road_poses.size(); ++j) {
+                    dir4_roads_poses.push_back(dir_road_poses[j]);
+                }
+
+            }
+        }
+
+        all_roads.push_back(dir4_roads_poses);
+        dir4_roads_poses.clear();
+
+    }
+
+    for (int i=0; i<all_roads.size(); ++i) {
+        for (int j=i+1; j<all_roads.size(); ++j) {
+            QList<PiecePos> inters = find_intersections(all_roads.at(i), all_roads.at(j));
+            for (QList<PiecePos>::const_iterator iter = inters.begin();
+                 iter != inters.end(); ++iter) {
+                candi_poses.push_back(*iter);
+            }
+        }
+    }
+
+    candi_poses.push_back(end_pos);
+
+    return candi_poses;
+}
+
+
+bool Chessboard::searchPathByEatedPoses4King(PiecePos curPos, const PiecePos& end_pos, QList<PiecePos>& midPoses,
+                                             const QList<PiecePos> &eat_lst, const QList<PiecePos> candi_poses,
+                                             bool visited[])
+{
+    if ((curPos.row == end_pos.row) &&
+        (curPos.col == end_pos.col)) {
+        int i = 0;
+        for (; i<eat_lst.size(); ++i) {
+            if (visited[i] == false)
+                break;
+        }
+        if (i == eat_lst.size())
+            return true;
+    }
+
+    for (int i=0; i<eat_lst.size(); ++i) {
+        if (!visited[i]) {
+
+            int offset_row_cur_eat = eat_lst.at(i).row - curPos.row;
+            int offset_col_cur_eat = eat_lst.at(i).col - curPos.col;
+
+            // check if at the same diagonal line
+            if (std::abs(offset_row_cur_eat) == std::abs(offset_col_cur_eat)) {
+                int dir_row_cur_eat = offset_row_cur_eat / std::abs(offset_row_cur_eat);
+                int dir_col_cur_eat = offset_col_cur_eat / std::abs(offset_col_cur_eat);
+
+                for (QList<PiecePos>::const_iterator iter = candi_poses.begin();
+                     iter != candi_poses.end(); ++iter) {
+                    int offset_row_cur_candi = iter->row - curPos.row;
+                    int offset_col_cur_candi = iter->col - curPos.col;
+
+                    // check if at the same diagonal line
+                    if ((offset_row_cur_candi != 0) &&
+                        (offset_col_cur_candi != 0) &&
+                        std::abs(offset_row_cur_candi) == std::abs(offset_col_cur_candi)) {
+                        int dir_row_cur_candi = offset_row_cur_candi / std::abs(offset_row_cur_candi);
+                        int dir_col_cur_candi = offset_col_cur_candi / std::abs(offset_col_cur_candi);
+
+                        if ((dir_row_cur_eat == dir_row_cur_candi) &&
+                            (dir_col_cur_eat == dir_col_cur_candi) &&
+                            (std::abs(offset_row_cur_eat) < std::abs(offset_row_cur_candi)) &&
+                            (std::abs(offset_col_cur_eat) < std::abs(offset_col_cur_candi))) {
+
+                            visited[i] = true;
+                            midPoses.push_back(*iter);
+
+                            if (searchPathByEatedPoses4King(*iter, end_pos, midPoses, eat_lst, candi_poses, visited))
+                                return true;
+
+                            visited[i] = false;
+                            midPoses.pop_back();
+
+
+                        }
+                    }
+
+                }
+            }
+
+        }
+    }
+
+    return false;
 }
