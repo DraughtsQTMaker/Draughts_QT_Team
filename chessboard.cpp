@@ -2069,7 +2069,14 @@ void Chessboard::redo()
 void Chessboard::humanSurrender()
 {
     if (!gameOver) {
+
+        bool firstWin = false;
+
         this->setAllChessLabelDisabled();
+
+//        if(!game_result_lst.back().contains(" ")) {
+//            game_result_lst.pop_back();
+//        }
 
         if (!blackTurn) { //human first (opponent = first side(black))
             QMessageBox::about(this, tr("Surrender"), tr("Red Win!!! \n 0-1"));
@@ -2080,7 +2087,11 @@ void Chessboard::humanSurrender()
             QMessageBox::about(this, tr("Surrender"), tr("Black Win!!! \n 1-0"));
             this->game_result_lst.push_front("结果：1-0\n");
             this->game_result_lst.push_back("1-0");
+            firstWin = true;
         }
+
+        this->createText(first, second, this->game_result_lst);
+        this->reNameForText(firstWin);
 
         gameOver = true;
     }
@@ -2090,18 +2101,26 @@ void Chessboard::humanSurrender()
 void Chessboard::robotSurrender()
 {
     if (!gameOver) {
+
+        bool firstWin = false;
+
         this->setAllEmptyPositionEnabled();
 
         if (!blackTurn) { //human first (me = second side(red))
             QMessageBox::about(this, tr("Surrender"), tr("Black Win!!! \n 1-0"));
             this->game_result_lst.push_front("结果：1-0\n");
             this->game_result_lst.push_back("1-0");
+
+            firstWin = true;
         }
         else { //robot first (me = first side(black))
             QMessageBox::about(this, tr("Surrender"), tr("Red Win!!! \n 0-1"));
             this->game_result_lst.push_front("结果：0-1\n");
             this->game_result_lst.push_back("0-1");
         }
+
+        this->createText(first, second, this->game_result_lst);
+        this->reNameForText(firstWin);
 
         gameOver = true;
     }
@@ -2117,6 +2136,9 @@ void Chessboard::draw()
         QMessageBox::about(this, tr("Draw"), tr("Draw!!! \n *"));
         this->game_result_lst.push_front("结果：*\n");
         this->game_result_lst.push_back("*");
+
+        this->createText(first, second, this->game_result_lst);
+        this->reNameForText(false, true);
 
         gameOver = true;
     }
@@ -2218,17 +2240,24 @@ void Chessboard::createText(QString first, QString second, QList<QString> game_r
 
 
 /*打谱TXT重命名 result格式 1-0 0-1*/
-void Chessboard::reNameForText(bool firstWin)
+void Chessboard::reNameForText(bool firstWin, bool draw)
 {
     //更改文件中结果行
     //若上方棋子胜利，记录格式为“结果：1-0”；若下方棋子胜利，记 录格式为“结果：0-1”；若为平局，记录格式为“结果：*”。
     QString winner ;
-    if (firstWin) {
-        winner.append(QString("先手胜"));
+
+    if (!draw) {
+        if (firstWin) {
+            winner.append(QString("先手胜"));
+        }
+        else {
+            winner.append(QString("后手胜"));
+        }
     }
     else {
-        winner.append(QString("后手胜"));
+        winner.append(QString("平局"));
     }
+
 
     //文件重命名
     QFile file(path);

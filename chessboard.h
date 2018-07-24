@@ -165,7 +165,7 @@ public:
 
      QString result="";
     /*打谱TXT重命名 */
-    void reNameForText(bool firstWin);
+    void reNameForText(bool firstWin, bool draw=false);
 
     //写入结果 例如 结果：1-0
     void writeResult(QString result);
