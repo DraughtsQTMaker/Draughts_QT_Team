@@ -58,12 +58,16 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->redoButton->setText("Redo");
     this->redoButton->setDisabled(true);
 
-    this->surrenderButton = new QPushButton(this);
-    this->surrenderButton->resize(40, 20);
-    this->surrenderButton->setText("Surrender");
+    this->humanSurrenderButton = new QPushButton(this);
+//    this->humanSurrenderButton->resize(30, 20);
+    this->humanSurrenderButton->setText("human/oppo Surrender");
+
+    this->robotSurrenderButton = new QPushButton(this);
+//    this->robotSurrenderButton->resize(30, 20);
+    this->robotSurrenderButton->setText("robot/me Surrender");
 
     this->drawButton = new QPushButton(this);
-    this->drawButton->resize(40, 20);
+//    this->drawButton->resize(20, 20);
     this->drawButton->setText("Draw");
 
     mainLayout->addWidget(this->robotFirstButton, this->chessboardType,0,1,this->chessboardType/2);
@@ -75,7 +79,8 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     mainLayout->addWidget(this->undoButton, this->chessboardType+2, 0, 1, this->chessboardType/2);
     mainLayout->addWidget(this->redoButton, this->chessboardType+2, this->chessboardType/2, 1, this->chessboardType/2);
 
-    mainLayout->addWidget(this->surrenderButton, this->chessboardType+3, 0, 1, this->chessboardType/2);
+    mainLayout->addWidget(this->humanSurrenderButton, this->chessboardType+3, 0, 1, this->chessboardType/4);
+    mainLayout->addWidget(this->robotSurrenderButton, this->chessboardType+3, this->chessboardType/4, 1, this->chessboardType/4);
     mainLayout->addWidget(this->drawButton, this->chessboardType+3, this->chessboardType/2, 1, this->chessboardType/2);
 
     connect(this->robotFirstButton, SIGNAL(clicked()), this, SLOT(robotAction()));
@@ -87,7 +92,8 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     connect(this->undoButton, SIGNAL(clicked()), this, SLOT(undo()));
     connect(this->redoButton, SIGNAL(clicked()), this, SLOT(redo()));
 
-    connect(this->surrenderButton, SIGNAL(clicked()), this, SLOT(surrender()));
+    connect(this->humanSurrenderButton, SIGNAL(clicked()), this, SLOT(humanSurrender()));
+    connect(this->robotSurrenderButton, SIGNAL(clicked()), this, SLOT(robotSurrender()));
     connect(this->drawButton, SIGNAL(clicked()), this, SLOT(draw()));
 
     this->pathLabel = new QLabel();
@@ -2050,15 +2056,60 @@ void Chessboard::redo()
 }
 
 //SLOTS
-void Chessboard::surrender()
+void Chessboard::humanSurrender()
 {
+    if (!gameOver) {
+        this->setAllChessLabelDisabled();
 
+        if (!blackTurn) { //human first (opponent = first side(black))
+            QMessageBox::about(this, tr("Surrender"), tr("Red Win!!! \n 0-1"));
+            this->game_result_lst.push_front("结果：0-1\n");
+            this->game_result_lst.push_back("0-1");
+        }
+        else { //robot first (opponent = second side(red))
+            QMessageBox::about(this, tr("Surrender"), tr("Black Win!!! \n 1-0"));
+            this->game_result_lst.push_front("结果：1-0\n");
+            this->game_result_lst.push_back("1-0");
+        }
+
+        gameOver = true;
+    }
+}
+
+//SLOTS
+void Chessboard::robotSurrender()
+{
+    if (!gameOver) {
+        this->setAllEmptyPositionEnabled();
+
+        if (!blackTurn) { //human first (me = second side(red))
+            QMessageBox::about(this, tr("Surrender"), tr("Black Win!!! \n 1-0"));
+            this->game_result_lst.push_front("结果：1-0\n");
+            this->game_result_lst.push_back("1-0");
+        }
+        else { //robot first (me = first side(black))
+            QMessageBox::about(this, tr("Surrender"), tr("Red Win!!! \n 0-1"));
+            this->game_result_lst.push_front("结果：0-1\n");
+            this->game_result_lst.push_back("0-1");
+        }
+
+        gameOver = true;
+    }
 }
 
 
 //SLOTS
 void Chessboard::draw()
 {
+    if (!gameOver) {
+        this->setAllChessLabelDisabled();
+
+        QMessageBox::about(this, tr("Draw"), tr("Draw!!! \n *"));
+        this->game_result_lst.push_front("结果：*\n");
+        this->game_result_lst.push_back("*");
+
+        gameOver = true;
+    }
 
 }
 
@@ -2079,39 +2130,31 @@ void Chessboard::judge()
     }
 
     if(existedBlackUiPieceCounter == 0){
-        QMessageBox::about(this,tr("Find Winner!"),tr("Red Win!!!"));
+        QMessageBox::about(this,tr("Find Winner!"),tr("Red Win!!! \n 0-1"));
         //设置所有chessLabel为Disabled
         this->setAllChessLabelDisabled();
 
-        if (!blackTurn) {
-            this->game_result_lst.push_front("结果：0-1\n");
-            this->game_result_lst.push_back("0-1");
-        }
-
-        else {
-            this->game_result_lst.push_front("结果：1-0\n");
-            this->game_result_lst.push_back("1-0");
-            firstWin = true;
-        }
+        // human first (me = second side (red))
+        // or
+        // robot first (me = first side (black))
+        this->game_result_lst.push_front("结果：0-1\n");
+        this->game_result_lst.push_back("0-1");
+        firstWin = true;
 
         gameOver = true;
     }
 
     if(existedRedUiPieceCounter == 0){
-        QMessageBox::about(this,tr("Find Winner!"),tr("Black Win!!!"));
+        QMessageBox::about(this,tr("Find Winner!"),tr("Black Win!!! \n 1-0"));
         //设置所有chessLabel为Disabled
         this->setAllChessLabelDisabled();
 
-        if (blackTurn) {
-            this->game_result_lst.push_front("结果：1-0\n");
-            this->game_result_lst.push_back("1-0");
-            firstWin = true;
-        }
-        else {
-            this->game_result_lst.push_front("结果：0-1\n");
-            this->game_result_lst.push_back("0-1");
-        }
-
+        // robot first (me = first side (black))
+        // or
+        // human first (me = second side (red))
+        this->game_result_lst.push_front("结果：1-0\n");
+        this->game_result_lst.push_back("1-0");
+        firstWin = true;
 
         gameOver = true;
     }

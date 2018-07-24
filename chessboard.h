@@ -66,7 +66,8 @@ private:
     QPushButton* undoButton; //开始悔棋
     QPushButton* redoButton; //撤销悔棋
 
-    QPushButton* surrenderButton; //投降
+    QPushButton* humanSurrenderButton; //人投降 (用于比赛时对方机器投降)
+    QPushButton* robotSurrenderButton; //机器投降 (用于比赛时我方机器投降)
     QPushButton* drawButton; //平局
 
     QList<StackElement> historyStack_human; //栈结构，记录行棋始末位置，用于悔棋(human)
@@ -180,7 +181,8 @@ public slots:
     void repealConsecutiveEating();
     void undo();
     void redo();
-    void surrender();
+    void humanSurrender();
+    void robotSurrender();
     void draw();
 
 };
