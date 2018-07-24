@@ -59,15 +59,15 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->redoButton->setDisabled(true);
 
     this->humanSurrenderButton = new QPushButton(this);
-//    this->humanSurrenderButton->resize(30, 20);
+//    this->humanSurrenderButton->resize(40, 20);
     this->humanSurrenderButton->setText("human/oppo Surrender");
 
     this->robotSurrenderButton = new QPushButton(this);
-//    this->robotSurrenderButton->resize(30, 20);
+//    this->robotSurrenderButton->resize(40, 20);
     this->robotSurrenderButton->setText("robot/me Surrender");
 
     this->drawButton = new QPushButton(this);
-//    this->drawButton->resize(20, 20);
+//    this->drawButton->resize(80, 20);
     this->drawButton->setText("Draw");
 
     mainLayout->addWidget(this->robotFirstButton, this->chessboardType,0,1,this->chessboardType/2);
@@ -79,9 +79,10 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     mainLayout->addWidget(this->undoButton, this->chessboardType+2, 0, 1, this->chessboardType/2);
     mainLayout->addWidget(this->redoButton, this->chessboardType+2, this->chessboardType/2, 1, this->chessboardType/2);
 
-    mainLayout->addWidget(this->humanSurrenderButton, this->chessboardType+3, 0, 1, this->chessboardType/4);
-    mainLayout->addWidget(this->robotSurrenderButton, this->chessboardType+3, this->chessboardType/4, 1, this->chessboardType/4);
-    mainLayout->addWidget(this->drawButton, this->chessboardType+3, this->chessboardType/2, 1, this->chessboardType/2);
+    mainLayout->addWidget(this->humanSurrenderButton, this->chessboardType+3, 0, 1, this->chessboardType/2);
+    mainLayout->addWidget(this->robotSurrenderButton, this->chessboardType+3, this->chessboardType/2, 1, this->chessboardType/2);
+
+    mainLayout->addWidget(this->drawButton, this->chessboardType+4, 0, 1, this->chessboardType);
 
     connect(this->robotFirstButton, SIGNAL(clicked()), this, SLOT(robotAction()));
     connect(this->manFirstButton, SIGNAL(clicked()), this,SLOT(manAction()));
@@ -98,7 +99,7 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
 
     this->pathLabel = new QLabel();
     this->pathLabel->setStyleSheet("background-color:rgb(255,248,220)");
-    mainLayout->addWidget(this->pathLabel, this->chessboardType+4,0,1,this->chessboardType);
+    mainLayout->addWidget(this->pathLabel, this->chessboardType+5,0,1,this->chessboardType);
 
 }
 
