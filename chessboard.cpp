@@ -6,6 +6,7 @@ extern QHash<QByteArray, QPair<double, int> > blackHashTable;
 QString debugInfoShow = "";
 QString legalInfoShow = "";
 bool doShow = false;
+bool second_eat = false;
 
 
 //构造函数
@@ -1157,12 +1158,14 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                 // 显示棋谱(human)
                 if (debugInfoShow.length() == 0) { // the first side is human
                     debugInfoShow = "\t human: \t";
-                    legalInfoShow = "\0";
+                    if (!second_eat)
+                        legalInfoShow = "\0";
                 }
-                else { // the first side is robot
+                else { // the first side is robot (or the first side is human when begin second eat)
                     doShow = true;
                     debugInfoShow.append("\t human: \t");
-                    legalInfoShow.append(" ");
+                    if (!second_eat)
+                        legalInfoShow.append(" ");
                 }
                 debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
                 debugInfoShow.append("-->");
@@ -1172,16 +1175,36 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
                     legalInfoShow.append(legal_begin_str + "-" + legal_end_str);
                 }
                 else { //吃子走步
-                    legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
+                    if (!consecutiveEating)
+                        legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
+                    else {
+                        if (legalInfoShow == "\0" || legalInfoShow[legalInfoShow.length()-1] == ' ')
+                            legalInfoShow.append(legal_begin_str + "x" + legal_end_str);
+                        else
+                            legalInfoShow.append("x" + legal_end_str);
+                    }
                 }
                 if (doShow) {
-                    this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
+                    if (consecutiveEating) {
+                        this->pathLabel->setText(debugInfoShow);
+                        if (blackTurn)
+                            debugInfoShow.clear();
+                        second_eat = true;
+                    }
+                    else {
+                        this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
 
-                    this->game_result_lst.push_back(legalInfoShow);
+                        this->game_result_lst.push_back(legalInfoShow);
 
-                    debugInfoShow.clear();
-                    legalInfoShow.clear();
-                    doShow = false;
+                        debugInfoShow.clear();
+                        legalInfoShow.clear();
+                        doShow = false;
+                    }
+
+                }
+                else {
+                    if (consecutiveEating && !second_eat)
+                        second_eat = true;
                 }
 
 
@@ -1774,7 +1797,35 @@ void Chessboard::repealConsecutiveEating(){
         //------------------在机器方开始下之前，先判断当前手动下棋方是否取胜---------------//
         this->judge();
 
-        this->robotPlay();
+        if (second_eat)
+            second_eat = false;
+
+        if (doShow && blackTurn) { // robot first
+            this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
+
+            this->game_result_lst.push_back(legalInfoShow);
+
+            debugInfoShow.clear();
+            legalInfoShow.clear();
+
+            doShow = false;
+
+            this->robotPlay();
+        }
+        else if (doShow && !blackTurn) { // human first
+
+            doShow = false;
+
+            this->robotPlay();
+
+//            this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
+
+//            this->game_result_lst.push_back(legalInfoShow);
+
+//            debugInfoShow.clear();
+//            legalInfoShow.clear();
+
+        }
 
         this->refreshChessBoard();
         //-------------------Robot下完棋后，再进行一次判断------------------------//
@@ -1825,6 +1876,16 @@ void Chessboard::undo()
             }
             this->redoStack_robot.push_back(this->historyStack_robot.back());
             this->historyStack_robot.pop_back();
+
+
+            if (!(robot_begin.row == robot_end.row) &&
+                    !(robot_begin.col == robot_end.col)) {
+                if (this->game_result_lst.size() != 0) {
+                    this->game_result_lst_redo.push_back(this->game_result_lst.back());
+                    this->game_result_lst.pop_back();
+                }
+            }
+
         }
         if (!this->historyStack_human.empty()) {
 
@@ -1869,10 +1930,7 @@ void Chessboard::undo()
             this->redoButton->setEnabled(true);
         }
 
-        if (this->game_result_lst.size() != 0) {
-            this->game_result_lst_redo.push_back(this->game_result_lst.back());
-            this->game_result_lst.pop_back();
-        }
+
 
         //刷新棋盘
         this->refreshChessBoard();
