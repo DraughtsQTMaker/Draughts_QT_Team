@@ -58,6 +58,14 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->redoButton->setText("Redo");
     this->redoButton->setDisabled(true);
 
+    this->surrenderButton = new QPushButton(this);
+    this->surrenderButton->resize(40, 20);
+    this->surrenderButton->setText("Surrender");
+
+    this->drawButton = new QPushButton(this);
+    this->drawButton->resize(40, 20);
+    this->drawButton->setText("Draw");
+
     mainLayout->addWidget(this->robotFirstButton, this->chessboardType,0,1,this->chessboardType/2);
     mainLayout->addWidget(this->manFirstButton, this->chessboardType,this->chessboardType/2,1,this->chessboardType/2);
 
@@ -66,6 +74,9 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
 
     mainLayout->addWidget(this->undoButton, this->chessboardType+2, 0, 1, this->chessboardType/2);
     mainLayout->addWidget(this->redoButton, this->chessboardType+2, this->chessboardType/2, 1, this->chessboardType/2);
+
+    mainLayout->addWidget(this->surrenderButton, this->chessboardType+3, 0, 1, this->chessboardType/2);
+    mainLayout->addWidget(this->drawButton, this->chessboardType+3, this->chessboardType/2, 1, this->chessboardType/2);
 
     connect(this->robotFirstButton, SIGNAL(clicked()), this, SLOT(robotAction()));
     connect(this->manFirstButton, SIGNAL(clicked()), this,SLOT(manAction()));
@@ -76,9 +87,12 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     connect(this->undoButton, SIGNAL(clicked()), this, SLOT(undo()));
     connect(this->redoButton, SIGNAL(clicked()), this, SLOT(redo()));
 
+    connect(this->surrenderButton, SIGNAL(clicked()), this, SLOT(surrender()));
+    connect(this->drawButton, SIGNAL(clicked()), this, SLOT(draw()));
+
     this->pathLabel = new QLabel();
     this->pathLabel->setStyleSheet("background-color:rgb(255,248,220)");
-    mainLayout->addWidget(this->pathLabel, this->chessboardType+3,0,1,this->chessboardType);
+    mainLayout->addWidget(this->pathLabel, this->chessboardType+4,0,1,this->chessboardType);
 
 }
 
@@ -113,7 +127,7 @@ void Chessboard::initializeChessLabelList(){
                 ChessLabel * currentLabel = this->chessLabelList[k++];
                 currentLabel->setText(tempString);
                 currentLabel->setMargin(0);
-                currentLabel->setFont(QFont("Timers" , 12 ,  QFont::Bold));
+                currentLabel->setFont(QFont("Timers" , 8,  QFont::Bold));
 
                 //
                 currentLabel->setAlignment(Qt::AlignBottom);
@@ -2032,6 +2046,19 @@ void Chessboard::redo()
         this->refreshChessBoard();
 
     }
+
+}
+
+//SLOTS
+void Chessboard::surrender()
+{
+
+}
+
+
+//SLOTS
+void Chessboard::draw()
+{
 
 }
 
