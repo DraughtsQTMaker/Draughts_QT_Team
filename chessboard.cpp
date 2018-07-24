@@ -61,14 +61,17 @@ Chessboard::Chessboard(QWidget *parent,int chessboardType,int layerNumberOfSearc
     this->humanSurrenderButton = new QPushButton(this);
 //    this->humanSurrenderButton->resize(40, 20);
     this->humanSurrenderButton->setText("human/oppo Surrender");
+    this->humanSurrenderButton->setDisabled(true);
 
     this->robotSurrenderButton = new QPushButton(this);
 //    this->robotSurrenderButton->resize(40, 20);
     this->robotSurrenderButton->setText("robot/me Surrender");
+    this->robotSurrenderButton->setDisabled(true);
 
     this->drawButton = new QPushButton(this);
 //    this->drawButton->resize(80, 20);
     this->drawButton->setText("Draw");
+    this->drawButton->setDisabled(true);
 
     mainLayout->addWidget(this->robotFirstButton, this->chessboardType,0,1,this->chessboardType/2);
     mainLayout->addWidget(this->manFirstButton, this->chessboardType,this->chessboardType/2,1,this->chessboardType/2);
@@ -1719,6 +1722,9 @@ void Chessboard::robotAction(){
         this->redoStack_robot.clear();
     this->undoButton->setDisabled(true);
     this->redoButton->setDisabled(true);
+    this->humanSurrenderButton->setEnabled(true);
+    this->robotSurrenderButton->setEnabled(true);
+    this->drawButton->setEnabled(true);
 
     if (debugInfoShow.length() != 0)
         debugInfoShow.clear();
@@ -1775,6 +1781,9 @@ void Chessboard::manAction() {
         this->redoStack_robot.clear();
     this->undoButton->setDisabled(true);
     this->redoButton->setDisabled(true);
+    this->humanSurrenderButton->setEnabled(true);
+    this->robotSurrenderButton->setEnabled(true);
+    this->drawButton->setEnabled(true);
 
     if (debugInfoShow.length() != 0)
         debugInfoShow.clear();
