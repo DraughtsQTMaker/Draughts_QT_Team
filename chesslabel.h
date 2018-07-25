@@ -12,7 +12,7 @@ class ChessLabel : public QLabel
 
 private:
     bool dormant;
-    int chessType;
+    int chessType; //black: 1; blackKing: 2; red: -1; redKing: -2
     int rowNumber,colNumber;
 public:
     //构造函数
