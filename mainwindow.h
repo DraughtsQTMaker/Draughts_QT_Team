@@ -6,6 +6,7 @@
 #include <QRadioButton>
 #include <QLabel>
 #include <QLayout>
+#include <QInputDialog>
 
 #include "chessboard.h"
 
@@ -25,7 +26,10 @@ public:
 private:
     // information text of version selection dialog
     QLabel* labelTex;
-
+    QLabel* firstName;
+    QLabel* secondName;
+    QLineEdit* firstEdit;
+    QLineEdit* secondEdit;
     // version selection radio buttons
     // version 64
     QRadioButton* mode64;
@@ -37,6 +41,7 @@ private:
 
     // layouts of version selection dialog
     QVBoxLayout* mainLayout;
+    QHBoxLayout* playerSideLayout;
     QHBoxLayout* labelLayout;
     QHBoxLayout* radioLayout;
     QHBoxLayout* butLayout;
@@ -48,7 +53,7 @@ private:
     // layer number of version 64
     const int mode64_layNum = 8;
     // layer number of version 100
-    const int mode100_layNum = 11;
+    const int mode100_layNum = 8;
 
 public slots:
     virtual void accept();

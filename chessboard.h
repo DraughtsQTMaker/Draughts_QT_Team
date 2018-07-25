@@ -1,6 +1,8 @@
 #ifndef CHESSBOARD_H
 #define CHESSBOARD_H
 
+#include <time.h>
+#include <string>
 #include <QLabel>
 #include <QPushButton>
 #include <QGridLayout>
@@ -11,6 +13,42 @@
 #include "BackEnd/Checker_AlphaBetaSearch.h"
 #include "BackEnd/Checker_CheckerState.h"
 
+struct PiecePos
+{
+    int row;
+    int col;
+    int chessType;
+
+    PiecePos(int row, int col, int type=0) :
+        row(row), col(col), chessType(type)
+    {}
+
+};
+
+struct StackElement
+{
+    QPair<PiecePos, PiecePos> begin_end_pos;
+    QList<PiecePos> eat_pos_lst;
+
+    StackElement(QPair<PiecePos, PiecePos> b_e_p) :
+        begin_end_pos(b_e_p)
+    {}
+
+    StackElement(QPair<PiecePos,PiecePos> b_e_p, QList<PiecePos> e_p_lst) :
+        begin_end_pos(b_e_p), eat_pos_lst(e_p_lst)
+    {}
+};
+
+struct ChessInfo
+{
+    QPair<int,int> pos;
+    int chessType;
+    bool isExisted;
+
+    ChessInfo(QPair<int,int> _pos, int type, bool _isExisted) :
+        pos(_pos), chessType(type), isExisted(_isExisted)
+    {}
+};
 
 class Chessboard : public QLabel
 {
@@ -24,6 +62,19 @@ private:
     QPushButton * manFirstButton;
     QPushButton * beginConsecutiveEatingButton; //开始连续跳吃
     QPushButton * repealConsecutiveEatingButton;   //撤销连续跳吃
+
+    QPushButton* undoButton; //开始悔棋
+    QPushButton* redoButton; //撤销悔棋
+
+    QPushButton* humanSurrenderButton; //人投降 (用于比赛时对方机器投降)
+    QPushButton* robotSurrenderButton; //机器投降 (用于比赛时我方机器投降)
+    QPushButton* drawButton; //平局
+
+    QList<StackElement> historyStack_human; //栈结构，记录行棋始末位置，用于悔棋(human)
+    QList<StackElement> redoStack_human; //栈结构，记录悔棋始末位置，用于撤销悔棋(human)
+    QList<StackElement> historyStack_robot; //栈结构，记录行棋始末位置，用于悔棋(robot)
+    QList<StackElement> redoStack_robot; //栈结构，记录悔棋始末位置，用于撤销悔棋(robot)
+
     QLabel * pathLabel;
 
     QGridLayout * mainLayout;
@@ -32,6 +83,9 @@ private:
 
     ChessStatus chessStatus;
     Checker_AlphaBetaSearch * robot;
+
+    QList<QString> game_result_lst;
+    QList<QString> game_result_lst_redo;
 
 
 
@@ -62,8 +116,6 @@ private:
     //当点击一个棋子后，寻找其所有可以移动的合法位置
     void searchAvaliablePositionToMove(int, QPair<int,int>);
 
-
-
     //显示当前可以落子的位置
     void showPossiblePositionCanMoveTo();
 
@@ -74,6 +126,19 @@ private:
     //判断输赢
     void judge();
 
+    QList<PiecePos> getMiddleEatedPoses(PiecePos begin_pos, PiecePos end_pos, QList<PiecePos> eat_lst);
+
+    // function for non-king
+    bool searchPathByEatedPoses4NonKing(PiecePos curPos, PiecePos end_pos, QList<PiecePos>& midPoses,
+                                        QList<PiecePos> eat_lst, bool visited[]);
+
+    // function for king
+    QList<PiecePos> find_road(PiecePos ppos, int dir_row, int dir_col);
+    QList<PiecePos> find_intersections(const QList<PiecePos>& lst1, const QList<PiecePos>& lst2);
+    QList<PiecePos> getCandidatePoses(const PiecePos& begin_pos, const PiecePos& end_pos, const QList<PiecePos>& eat_lst);
+    bool searchPathByEatedPoses4King(PiecePos curPos, const PiecePos& end_pos, QList<PiecePos>& midPoses,
+                                     const QList<PiecePos>& eat_lst, const QList<PiecePos> candi_poses,
+                                     bool visited[]);
 
 public:
 
@@ -86,6 +151,26 @@ public:
     //机器方下棋
     int robotPlay();
 
+    //记录第几回合
+    int count=1;
+
+
+//    // 回合完毕后，写入字符串
+//    void  writeText(QString str);
+
+    // 创建打谱文件  返回文件路径
+    /*输入：先手名称、后手名称
+                返回：创建文件名*/
+    void createText(QString first, QString second, QList<QString> game_res_lst);
+
+     QString result="";
+    /*打谱TXT重命名 */
+    void reNameForText(bool firstWin, bool draw=false);
+
+    //写入结果 例如 结果：1-0
+    void writeResult(QString result);
+
+
 
 signals:
 
@@ -94,6 +179,11 @@ public slots:
     void manAction();
     void beginConsecutiveEating();
     void repealConsecutiveEating();
+    void undo();
+    void redo();
+    void humanSurrender();
+    void robotSurrender();
+    void draw();
 
 };
 
