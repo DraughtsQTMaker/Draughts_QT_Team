@@ -32,8 +32,8 @@ bool consecutiveEating = false;
 bool gameOver = false;
 
 //QString path="./res_tmp.txt";
-QString path="/Users/hiroshi831/tmp/res_tmp.txt";
-QString newFileTitle = "/Users/hiroshi831/tmp/DR";
+QString path="D:/Users/ololo/Source/res_tmp.txt";
+QString newFileTitle = "D:/Users/ololo/Source/DR";
 
 QString first="";
 QString second="";

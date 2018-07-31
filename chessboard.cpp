@@ -219,7 +219,7 @@ void Chessboard::initializeChessLabelList(){
 //                qDebug()<<k;
                 currentLabel->setText(tempString);
                 currentLabel->setMargin(0);
-                currentLabel->setFont(QFont("Timers" , 12 ,  QFont::Bold));
+                currentLabel->setFont(QFont("Timers" , 7 ,  QFont::Bold));
 
                 //设置对其方式
                 currentLabel->setAlignment(Qt::AlignBottom);
@@ -1181,13 +1181,13 @@ void Chessboard::mouseReleaseEvent(QMouseEvent *){
 
                 // 显示棋谱(human)
                 if (debugInfoShow.length() == 0) { // the first side is human
-                    debugInfoShow = "\t human: \t";
+                    debugInfoShow = " human:  ";
                     if (!second_eat)
                         legalInfoShow = "\0";
                 }
                 else { // the first side is robot (or the first side is human when begin second eat)
                     doShow = true;
-                    debugInfoShow.append("\t human: \t");
+                    debugInfoShow.append("\t human: ");
                     if (!second_eat)
                         legalInfoShow.append(" ");
                 }
@@ -1474,12 +1474,11 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
 
             if (debugInfoShow.length() != 0) { // the first side is human
                 doShow = true;
-                debugInfoShow.append("\t robot:\t");
+                debugInfoShow.append(" robot:\t");
                 legalInfoShow.append(" ");
-
             }
             else { // the first side is robot(red)
-                debugInfoShow = "\t robot:\t";
+                debugInfoShow = " robot:\t";
                 legalInfoShow = "\0";
             }
             debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
@@ -1507,6 +1506,8 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
                 legalInfoShow.append(legal_end_str);
             }
 
+            //this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
+
             if (doShow) {
                 this->pathLabel->setText(debugInfoShow + "\n" + legalInfoShow);
 
@@ -1517,18 +1518,7 @@ void Chessboard::showPathOfRedPiece(ChessStatus oldChessStatus, ChessStatus newC
                 doShow = false;
             }
 
-//            QString targetPosition = "[" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + "]";
-//            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
-//            QString legalTargetPositionString = QString::number(legalTargetPosition);
-//            infoShow = beginPosition + "-->" + targetPosition + "\t(" + legalBeginPositionString + "-->" + legalTargetPositionString + ")";
 
-           /*
-            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-                        count++;
-                        if(count%2==0){
-                            this->writeText(this->writcontent);
-            }
-            */
         }
 
     }
@@ -1632,12 +1622,12 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
 
             if (debugInfoShow.length() != 0) { // the first side is human
                 doShow = true;
-                debugInfoShow.append("\t robot:\t");
+                debugInfoShow.append(" robot:\t");
                 legalInfoShow.append(" ");
 
             }
             else { // the first side is robot(black)
-                debugInfoShow = "\t robot:\t";
+                debugInfoShow = " robot:\t";
                 legalInfoShow = "\0";
             }
             debugInfoShow.append("[" + QString::number(begin_row) + "," + QString::number(begin_col) + "]");
@@ -1675,19 +1665,6 @@ void Chessboard::showPathOfBlackPiece(ChessStatus oldChessStatus, ChessStatus ne
                 doShow = false;
             }
 
-
-//            QString targetPosition = "(" + QString::number(newPositionList[i].first) + "," + QString::number(newPositionList[i].second)  + ")";
-//            int legalTargetPosition = newPositionList[i].first * this->chessboardType / 2 + newPositionList[i].second /2 + 1;
-//            QString legalTargetPositionString = QString::number(legalTargetPosition);
-//            this->pathLabel->setText(beginPosition + "----->" + targetPosition + "\t\t" + legalBeginPositionString + "----->" + legalTargetPositionString);
-            //
-            /*
-            writcontent=writcontent+legalBeginPositionString+"-"+legalTargetPositionString+"\t";
-            count++;
-            if(count%2==0){
-                this->writeText(this->writcontent);
-            }
-            */
         }
     }
 
@@ -2105,17 +2082,18 @@ void Chessboard::robotSurrender()
         bool firstWin = false;
 
         this->setAllEmptyPositionEnabled();
+        QTextCodec *codec = QTextCodec::codecForName("GBK");
 
         if (!blackTurn) { //human first (me = second side(red))
             QMessageBox::about(this, tr("Surrender"), tr("Black Win!!! \n 1-0"));
-            this->game_result_lst.push_front("结果：1-0\n");
+            this->game_result_lst.push_front(codec->toUnicode("结果：1-0\n"));
             this->game_result_lst.push_back("1-0");
 
             firstWin = true;
         }
         else { //robot first (me = first side(black))
             QMessageBox::about(this, tr("Surrender"), tr("Red Win!!! \n 0-1"));
-            this->game_result_lst.push_front("结果：0-1\n");
+            this->game_result_lst.push_front(codec->toUnicode("结果：0-1\n"));
             this->game_result_lst.push_back("0-1");
         }
 
@@ -2214,15 +2192,21 @@ void Chessboard::createText(QString first, QString second, QList<QString> game_r
     }
     QTextStream out(&file);
     QDateTime da_time;
-    QString time_str=da_time.currentDateTime().toString("yyyy-MM-dd");
+    QString time_str=da_time.currentDateTime().toString("yyyy.MM.dd");
 
-    out<< QString("时间:") <<time_str<<"\n";
+    //out<< QString("时间:") <<time_str<<"\n";
+    //out<<QObject::trUtf8("时间:") <<time_str<<"\n";
 
+    QTextCodec *codec = QTextCodec::codecForName("GBK");
     QString first_side_str = blackTurn ? "1" : "2";
 
-    out << QString("先手：") << first_side_str <<"\n";
-    out << QString("先手方：") <<first<<"\n";
-    out << QString("后手方：") <<second<<"\n";
+//    out << QString("先手：") << first_side_str <<"\n";
+//    out << QString("先手方：") <<first<<"\n";
+//    out << QString("后手方：") <<second<<"\n";
+      out<<codec->toUnicode("时间:") <<time_str<<"\n";
+      out<<codec->toUnicode("先手：1") <<"\n";
+      out<<codec->toUnicode("先手方：") <<first<<"\n";
+      out<<codec->toUnicode("后手方：") <<second<<"\n";
 
     for (int i=0; i<game_res_lst.size()-1; ++i) {
         if (i == 0)
@@ -2245,17 +2229,18 @@ void Chessboard::reNameForText(bool firstWin, bool draw)
     //更改文件中结果行
     //若上方棋子胜利，记录格式为“结果：1-0”；若下方棋子胜利，记 录格式为“结果：0-1”；若为平局，记录格式为“结果：*”。
     QString winner ;
+    QTextCodec *codec = QTextCodec::codecForName("GBK");
 
     if (!draw) {
         if (firstWin) {
-            winner.append(QString("先手胜"));
+            winner.append(codec->toUnicode("先手胜"));
         }
         else {
-            winner.append(QString("后手胜"));
+            winner.append(codec->toUnicode("后手胜"));
         }
     }
     else {
-        winner.append(QString("平局"));
+        winner.append(codec->toUnicode("平局"));
     }
 
 
@@ -2268,11 +2253,11 @@ void Chessboard::reNameForText(bool firstWin, bool draw)
     QString type=QString::number(chessboardType);
     QString newFileName= newFileTitle + type ;
 //    QString newFileName="./DR"+type ;
-    newFileName.append(QString("-先手参赛队"));
+    newFileName.append(codec->toUnicode("-先手参赛队"));
     newFileName=newFileName+first;
-    newFileName.append(QString("vs后手参赛队"));
+    newFileName.append(codec->toUnicode("vs后手参赛队"));
     newFileName=newFileName+second.append("-").append(winner).append("-").append(time_str);
-    newFileName.append(QString("安徽大学-2018年中国大学生计算机博弈大赛.txt"));
+    newFileName.append(codec->toUnicode("安徽大学-2018年中国大学生计算机博弈大赛.txt"));
 
     //QString newFileName="F:/c++/code/DR.txt";
 
